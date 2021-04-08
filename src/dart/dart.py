@@ -1,17 +1,15 @@
 import requests
 from utils import get_event_time
 
-"""
-Transforms DART CDR to Causemos format.
-- Discard noisy analyics
-- Pre-aggregate the analytics we actually want
-- Normalize fields where applicable
-"""
 def document_transform(doc):
+    """
+    Transforms DART CDR to Causemos format.
+    """
     extracted_metadata = doc["extracted_metadata"]
     publication_date = get_event_time(extracted_metadata["CreationDate"])
 
     ner = get_NER(doc)
+    analysis = get_analysis(doc)
 
     # print(publication_date)
     return {
@@ -25,11 +23,51 @@ def document_transform(doc):
         "extracted_text":   doc["extracted_text"],
         "collection_type":  doc["capture_source"],
         "ner_analytics": ner,
-        "analysis": []
+        "analysis": analysis
+    }
+
+
+def get_analysis(doc):
+    """
+    Extract stance and sentiment
+    """
+    stance = ""
+    subjectivity = ""
+    subjectivity_score = 0
+    sentiment = ""
+    sentiment_score = 0
+
+    annotations = doc["annotations"]
+    for annotation in annotations:
+        if annotation["type"] != "tags":
+            continue
+
+        if annotation["label"] == "Qntfy Fake News":
+            stance = annotation["content"][0]["value"]
+        elif annotation["label"] == "Qntfy Sentiment/Subjectivity":
+            content = annotation["content"]
+            for item in content:
+                v = item["value"]
+                if v == "objective" or v == "subjective":
+                    subjectivity = v
+                    subjectivity_score = item["confidence"]
+                else:
+                    sentiment = v
+                    sentiment_score = item["confidence"]
+    return {
+        "stance": stance,
+        "sentiment": sentiment,
+        "sentiment_score": sentiment_score,
+        "subjectivity": subjectivity,
+        "subjectivity_score": subjectivity_score
     }
 
 
 def get_NER(doc):
+    """ 
+    Extract location and organization entities from analytics. This is pretty noisy so just
+    return to top 5 workd-tokens based on world count.
+    """
     annotations = doc["annotations"]
     contents = []
     for annotation in annotations:
