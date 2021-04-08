@@ -87,10 +87,10 @@ def get_NER(doc):
             continue
         
         # FIXME: need to scrub text
-        value = item["value"]
+        value = item.get("value", "")
 
         if value in word_counter[tag]:
-            word_counter[tag][value] = world_counter[tag][value] + 1
+            word_counter[tag][value] = word_counter[tag][value] + 1
         else:
             word_counter[tag][value] = 1
 
