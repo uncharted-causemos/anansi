@@ -1,9 +1,13 @@
 from utils import get_event_time
 
 def influence_transform(statement, es):
+    """
+    Entry for Influece statement transform
+    """
     evidence = get_evidence(statement, es)
     subj = get_event(statement, "subj", es)
     obj = get_event(statement, "obj", es)
+    wm = get_wm(evidence, subj, obj)
 
     return {
         "id": statement["id"],
@@ -12,8 +16,78 @@ def influence_transform(statement, es):
         "modified_at": 0,
         "obj": obj,
         "subj": subj,
-        "wm": {}
+        "wm": wm
     }
+
+
+def get_wm(evidence, subj, obj):
+    """
+    Precomputed fields
+    """
+    wm = {}
+    readers_count = {
+        "hume": 0,
+        "eidos": 0,
+        "cwms": 0,
+        "sofia": 0
+    }
+    readers = []
+    contradictions = 0
+    hedgings = 0
+    for ev in evidence:
+        evidence_context = ev["evidence_context"]
+        reader = evidence_context["source_api"]
+        readers_count[reader] = readers_count[reader] + 1
+        readers.append(reader)
+        if len(evidence_context["hedging_words"]) > 0:
+            hedgings = hedgings + 1
+        if len(evidence_context["contradiction_words"]) > 0:
+            contradictions = contradictions + 1
+
+    readers = list(set(readers))
+
+    num_evidence = len(evidence)
+
+    # Set hedging categories:
+    # 0: no evidence with hedging
+    # 1: some evidence with hedging
+    # 2: all evidence has hedging
+    hedging_category = 0
+    if hedgings > 0 and hedgings < num_evidence: 
+        hedging_category = 1
+    elif hedgings == num_evidence: 
+        hedging_category = 2
+
+    # Set contradictions categories:
+    # 0: no evidence with negation flag
+    # 1: some evidence with negation flag
+    # 2: all evidence has negation flag
+    contradiction_category = 0
+    if contradictions > 0 and contradictions < num_evidence: 
+        contradiction_category = 1
+    elif contradictions == num_evidence: 
+        contradiction_category = 2
+
+    loop = False
+    if subj["concept"] == obj["concept"]:
+        loop = True
+    edge = subj["concept"] + "///" + obj["concept"]
+    statement_polarity = subj["polarity"] * obj["polarity"]
+    min_grounding_score = min(subj["concept_score"], obj["concept_score"])
+
+    wm["num_evidence"] = num_evidence
+    wm["num_contradictions"] = contradictions
+    wm["contradiction_category"] = contradiction_category
+    wm["hedging_category"] = hedging_category
+    wm["readers_evidence_count"] = readers_count
+    wm["is_selfloop"] = loop
+    wm["statement_polarity"] = statement_polarity
+    wm["edge"] = edge
+    wm["state"] = 1
+    wm["edited"] = 0
+    wm["readers"] = readers
+    wm["min_grounding_score"] = min_grounding_score
+    return wm
 
 
 def get_evidence(statement, es):
@@ -94,7 +168,6 @@ def get_event(statement, t, es):
                 "lat": geo["lat"],
                 "lon": geo["lon"]
             }
-            print(geo_context)
 
     candidates = get_candidates(event)
     top = candidates[0]
