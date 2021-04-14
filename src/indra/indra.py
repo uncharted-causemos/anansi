@@ -1,3 +1,4 @@
+import time
 from utils import get_event_time
 
 def influence_transform(statement, es):
@@ -13,7 +14,7 @@ def influence_transform(statement, es):
         "id": statement["id"],
         "belief": statement["belief"],
         "evidence": evidence,
-        "modified_at": 0,
+        "modified_at": time.time() * 1000,
         "obj": obj,
         "subj": subj,
         "wm": wm
@@ -200,6 +201,11 @@ def get_candidates(event):
 
         for idx, _ in enumerate(flat_list):
             name = flat_list[idx]["grounding"]
+
+            # HACK: May need to remove trailing spaces that are found for SOFIA/CWMS reader
+            if name[-1] == "/":
+                name = name[:-1]
+
             score = flat_list[idx]["score"]
             theme = ""
             theme_property = ""

@@ -39,21 +39,22 @@ def get_analysis(doc):
 
     annotations = doc["annotations"]
     for annotation in annotations:
-        if annotation["type"] != "tags":
+        if annotation["type"] != "facets":
             continue
 
+        # FIXME: this has changed, don't know how to parse new structure
         if annotation["label"] == "Qntfy Fake News":
             stance = annotation["content"][0]["value"]
-        elif annotation["label"] == "Qntfy Sentiment/Subjectivity":
+        elif annotation["label"] == "qntfy-sentiment-annotator":
             content = annotation["content"]
             for item in content:
                 v = item["value"]
                 if v == "objective" or v == "subjective":
                     subjectivity = v
-                    subjectivity_score = item["confidence"]
+                    subjectivity_score = item["score"]
                 else:
                     sentiment = v
-                    sentiment_score = item["confidence"]
+                    sentiment_score = item["score"]
     return {
         "stance": stance,
         "sentiment": sentiment,
