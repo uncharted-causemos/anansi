@@ -17,8 +17,9 @@ def _format_for_es(index, data):
 
     for datum in data:
         yield {
-            '_source': datum,
-            '_index': index
+            "_source": datum,
+            "_index": index,
+            "_id": datum["id"]
         }
 
 # Simple Elastic wrapper, mostly for indexing and useful for looking up geo and cdr documents
