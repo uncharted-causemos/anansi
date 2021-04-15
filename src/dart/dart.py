@@ -31,7 +31,7 @@ def get_analysis(doc):
     """
     Extract stance and sentiment
     """
-    stance = ""
+    stance = "" # FIXME: Qntify no longer provide stance, to be removed
     subjectivity = ""
     subjectivity_score = 0
     sentiment = ""
@@ -42,19 +42,26 @@ def get_analysis(doc):
         if annotation["type"] != "facets":
             continue
 
-        # FIXME: this has changed, don't know how to parse new structure
-        if annotation["label"] == "Qntfy Fake News":
-            stance = annotation["content"][0]["value"]
-        elif annotation["label"] == "qntfy-sentiment-annotator":
+        if annotation["label"] == "qntfy-sentiment-annotator":
             content = annotation["content"]
             for item in content:
                 v = item["value"]
-                if v == "objective" or v == "subjective":
-                    subjectivity = v
-                    subjectivity_score = item["score"]
-                else:
-                    sentiment = v
-                    sentiment_score = item["score"]
+                score = item["score"]
+                if v == "sentiment":
+                    if score > 0.55:
+                        sentiment = "positive"
+                    elif score < 0.45:
+                        sentiment = "negative"
+                    else:
+                        sentiment = "neutral"
+                    sentiment_score = score
+                    
+                if v == "subjectivity":
+                    if score > 0.5:
+                        subjectivity = "objective"
+                    else:
+                        subjectivity = "subjective"
+                    subjectivity_score = score
     return {
         "stance": stance,
         "sentiment": sentiment,
