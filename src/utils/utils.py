@@ -18,7 +18,7 @@ def get_event_time(value):
 
     t = parse(value)
     return {
-        "date": value,
+        "date": round(t.timestamp() * 1000),
         "day": t.day,
         "month": t.month,
         "year": t.year 

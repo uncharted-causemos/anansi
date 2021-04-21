@@ -201,7 +201,7 @@ def get_event(statement, t, es):
         "factor": event["concept"]["name"],
         "polarity": event["delta"]["polarity"],
         "time_context": time_context,
-        "adjective": adjectives,
+        "adjectives": adjectives,
         "concept": top["name"],
         "concept_score": top["score"],
         "theme": top["theme"],
