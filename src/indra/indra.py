@@ -1,5 +1,21 @@
 import time
-from utils import get_event_time
+from utils import get_event_time, epoch_millis
+
+
+def metadata_transfrom(metadata, uuid, ontology_url):
+    """
+    Transforms INDRA metadata into a Causemos Knowledgebase entry record
+    """
+    corpus_id = metadata["corpus_id"]
+    return {
+        "corpus_parameter": metadata,
+        "ontology": ontology_url,
+        "corpus_id": corpus_id,
+        "name": corpus_id,
+        "id":   uuid,
+        "created_at": epoch_millis()
+    }
+
 
 def influence_transform(statement, es):
     """
@@ -91,6 +107,9 @@ def get_wm(evidence, subj, obj):
     return wm
 
 
+# Hack for a quick and dirty cache
+document_context_cache = {}
+
 def get_evidence(statement, es):
     """
     Parse evidnece into evidence_context and document_context
@@ -124,17 +143,21 @@ def get_evidence(statement, es):
 
         # Parsing document
         dart = ev["text_refs"]["DART"]
-        cdr = es.term_query("corpus", "doc_id", dart)
-        if cdr != None:
-            document_context["file_type"] = cdr["file_type"]
-            document_context["author"] = cdr["author"]
-            document_context["document_source"] = cdr["collection_type"] # ????
-            document_context["publisher_name"] = cdr["publisher_name"]
-            document_context["title"] = cdr["doc_title"]
-            document_context["ner_analytics"] = cdr["ner_analytics"]
-            document_context["analysis"] = cdr["analysis"]
-            document_context["publication_date"] = cdr["publication_date"]
-        document_context["doc_id"] = dart
+        if dart in document_context_cache:
+            document_context = document_context_cache[dart]
+        else:
+            cdr = es.term_query("corpus", "doc_id", dart)
+            if cdr != None:
+                document_context["file_type"] = cdr["file_type"]
+                document_context["author"] = cdr["author"]
+                document_context["document_source"] = cdr["collection_type"] # ????
+                document_context["publisher_name"] = cdr["publisher_name"]
+                document_context["title"] = cdr["doc_title"]
+                document_context["ner_analytics"] = cdr["ner_analytics"]
+                document_context["analysis"] = cdr["analysis"]
+                document_context["publication_date"] = cdr["publication_date"]
+            document_context["doc_id"] = dart
+            document_context_cache[dart] = document_context
 
         result.append({
             "evidence_context": evidence_context,
@@ -153,22 +176,23 @@ def get_event(statement, t, es):
     geo_context = {}
     adjectives = []
 
-    if "time" in event["context"]:
-        time_context["start"] = get_event_time(event["context"]["time"]["start"])
-        time_context["end"] = get_event_time(event["context"]["time"]["end"])
-
     if "adjectives" in event["delta"]:
         adjectives = event["delta"]["adjectives"]
 
-    if event["context"]["geo_location"] != None:
-        geo_id = event["context"]["geo_location"]["db_refs"]["GEOID"]
-        geo = es.term_query("geo", "geo_id", geo_id)
-        if geo != None:
-            geo_context["name"] = geo["name"]
-            geo_context["location"] = {
-                "lat": geo["lat"],
-                "lon": geo["lon"]
-            }
+    if "context" in event:
+        if "time" in event["context"]:
+            time_context["start"] = get_event_time(event["context"]["time"]["start"])
+            time_context["end"] = get_event_time(event["context"]["time"]["end"])
+
+        if "geo_location" in event["context"] and event["context"]["geo_location"] != None:
+            geo_id = event["context"]["geo_location"]["db_refs"]["GEOID"]
+            geo = es.term_query("geo", "geo_id", geo_id)
+            if geo != None:
+                geo_context["name"] = geo["name"]
+                geo_context["location"] = {
+                    "lat": geo["lat"],
+                    "lon": geo["lon"]
+                }
 
     candidates = get_candidates(event)
     top = candidates[0]
