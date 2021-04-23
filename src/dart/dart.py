@@ -13,7 +13,7 @@ def document_transform(doc):
 
     # print(publication_date)
     return {
-        "doc_id": doc["document_id"],
+        "id": doc["document_id"],
         "file_name": doc["source_uri"],
         "file_type": doc["content_type"],
         "doc_title": extracted_metadata.get("Title", ""),

@@ -73,15 +73,30 @@ class Elastic:
                 raise Exception("{} - {}".format(error["type"], error["reason"]))
         return response
 
-    def create_index(self, index, body={}):
+    def create_index(self, index, mappings={}):
         """
         Create an index in ES w/ or w/o a body
         """
+
+        settings = {
+            "index.number_of_shards": 1,
+            "index.number_of_replicas": 0
+        }
+
         response = self.client.indices.create(
             index=index,
-            body={'mappings': body},
+            body={"mappings": mappings, "settings": settings},
             ignore=400
         )
+        return response
+
+    def set_readonly(self, index, v):
+        body = {
+            "index": {
+                "blocks.read_only": v
+            }
+        }
+        response = self.client.indices.put_settings(body, index)
         return response
 
     def delete_index(self, index):
