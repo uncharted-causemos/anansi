@@ -1,5 +1,6 @@
 import logging
 import json
+import os
 import uuid
 from smart_open import open
 from elastic import Elastic
@@ -25,14 +26,14 @@ See ./scripts/build_dart.sh for creating a usable DART CDR json from raw DART ou
 INDRA_HOST = "http://wm.indra.bio/"
 
 # SOURCE_ES_HOST = "http://10.64.18.99"
-SOURCE_ES_HOST = "http://localhost"
-SOURCE_ES_PORT = 9200
+SOURCE_ES_HOST = os.environ.get("SOURCE_ES_HOST")
+SOURCE_ES_PORT = os.environ.get("SOURCE_ES_PORT")
 
-TARGET_ES_HOST = "http://localhost"
-TARGET_ES_PORT = 9200
+TARGET_ES_HOST = os.environ.get("TARGET_ES_HOST")
+TARGET_ES_PORT = os.environ.get("TARGET_ES_PORT")
 
-DART_DATA = "file:///Users/dchang/workspace/worldmodelers/anansi/src/sample-corpus.jsonl"
-INDRA_DATASET = "file:///Users/dchang/workspace/worldmodelers/anansi/scripts/phase3_eidos_v3"
+DART_DATA = os.environ.get("DART_DATA")
+INDRA_DATASET = os.environ.get("INDRA_DATASET")
 INDRA_STATEMENTS = INDRA_DATASET + "/statements.json"
 INDRA_METADATA = INDRA_DATASET + "/metadata.json"
 
@@ -90,7 +91,7 @@ except Exception as e:
 logger.info("Indexing INDRA statements")
 JSONL_ETL_wrapper(INDRA_STATEMENTS, indra_transform, indra_dataset_id)
 
-source_es.set_readonly(indra_dataset_id, True)
+target_es.set_readonly(indra_dataset_id, True)
 
 
 # 4. Create knowledge base entry
