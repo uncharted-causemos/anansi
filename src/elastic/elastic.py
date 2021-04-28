@@ -73,6 +73,10 @@ class Elastic:
                 raise Exception("{} - {}".format(error["type"], error["reason"]))
         return response
 
+    def list_indices(self):
+        response = self.client.indices.get("*")
+        return response
+
     def create_index(self, index, mappings={}):
         """
         Create an index in ES w/ or w/o a body
