@@ -30,7 +30,7 @@ def influence_transform(statement, es):
         "id": statement["id"],
         "belief": statement["belief"],
         "evidence": evidence,
-        "modified_at": time.time() * 1000,
+        "modified_at": round(time.time() * 1000),
         "obj": obj,
         "subj": subj,
         "wm": wm
