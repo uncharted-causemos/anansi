@@ -81,7 +81,7 @@ JSONL_ETL_wrapper(DART_DATA, document_transform, "corpus")
 def indra_transform(obj):
     return influence_transform(obj, source_es)
 
-mapping_content = json_file_content("file:///Users/dchang/workspace/worldmodelers/anansi/src/indra/indra_mapping.json")
+mapping_content = json_file_content("./src/indra/indra_mapping.json")
 try:
     target_es.create_index(indra_dataset_id, mapping_content)
     logger.info(f"Created index {indra_dataset_id}")
