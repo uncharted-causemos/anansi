@@ -3,15 +3,16 @@ import json
 import os
 from smart_open import open
 from elastic import Elastic
-from indra import influence_transform, metadata_transfrom, IndraAPI
-from dart import document_transform
-from utils import json_file_content
 from requests.auth import HTTPBasicAuth
 
 FORMAT = "%(asctime)-25s %(levelname)-8s %(message)s"
-logging.basicConfig(format=FORMAT)
-logger = logging.getLogger("X")
-logger.setLevel(20)
+logging.basicConfig(format=FORMAT, level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+from indra import influence_transform, metadata_transfrom, IndraAPI
+from dart import document_transform, get_CDRs
+from utils import json_file_content
+
 
 # Environment
 INDRA_HOST = os.environ.get("INDRA_HOST") # "http://wm.indra.bio/"
@@ -30,8 +31,10 @@ TARGET_ES_PORT = os.environ.get("TARGET_ES_PORT")
 # Request
 PROJECT_EXTENSION_ID = os.environ.get("PROJECT_EXTENSION_ID")
 
+
 # Fake payload
 FAKE_INDRA_REQUEST = {
+  "id": "xyz",
   "project_id": "integration-test-1",
   "records": [
       {
@@ -55,6 +58,7 @@ FAKE_INDRA_REQUEST = {
 # 5. Pivot "new_stmts" into array of INDRA statements and join with "beliefs", transform and index new statements to project index
 
 # 6. Mark as completed ??
+
 
 
 

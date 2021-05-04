@@ -1,6 +1,9 @@
 import requests
+import logging
 from requests.auth import HTTPBasicAuth
 from utils import get_event_time
+
+logger = logging.getLogger(__name__)
 
 def document_transform(doc):
     """
@@ -121,10 +124,11 @@ def get_CDRs(api_base, username, password, doc_ids):
     cdrs = []
     for doc_id in doc_ids:
         url = api_base + "/cdrs/" + doc_id
+        logger.info(f"Processing {url}")
         response = requests.get(url, auth=HTTPBasicAuth(username, password))
 
         if response.status_code > 200:
-            print(f"Cound not retrieve CDR for {doc_id}")
+            logger.info(f"Cound not retrieve CDR for {doc_id}")
             continue
         cdrs.append(response.json())
     return cdrs
