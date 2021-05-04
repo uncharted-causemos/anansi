@@ -1,4 +1,5 @@
 import requests
+from requests.auth import HTTPBasicAuth
 from utils import get_event_time
 
 def document_transform(doc):
@@ -111,3 +112,19 @@ def get_NER(doc):
         "loc": top_loc,
         "org": top_org
     }
+
+
+def get_CDRs(api_base, username, password, doc_ids):
+    """
+    Fetch CDRs as JSONs from DART service
+    """
+    cdrs = []
+    for doc_id in doc_ids:
+        url = api_base + "/cdrs/" + doc_id
+        response = requests.get(url, auth=HTTPBasicAuth(username, password))
+
+        if response.status_code > 200:
+            print(f"Cound not retrieve CDR for {doc_id}")
+            continue
+        cdrs.append(response.json())
+    return cdrs
