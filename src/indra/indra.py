@@ -137,10 +137,19 @@ def get_evidence(statement, es):
         evidence_context["source_hash"] = ev["source_hash"]
         evidence_context["hedging_words"] = hedgings
         evidence_context["contradiction_words"] = negated_texts
-        evidence_context["subj_adjectives"] = ev["annotations"]["subj_adjectives"]
-        evidence_context["subj_polarity"] = ev["annotations"]["subj_polarity"]
-        evidence_context["obj_adjectives"] = ev["annotations"]["obj_adjectives"]
-        evidence_context["obj_polarity"] = ev["annotations"]["obj_polarity"]
+        if "subj_polarity" in ev["annotations"]:
+            evidence_context["subj_polarity"] = ev["annotations"]["subj_polarity"]
+        if "obj_polarity" in ev["annotations"]:
+            evidence_context["obj_polarity"] = ev["annotations"]["obj_polarity"]
+
+        if "subj_adjectives" in ev["annotations"]:
+            evidence_context["subj_adjectives"] = ev["annotations"]["subj_adjectives"]
+        else:
+            evidence_context["subj_adjectives"] = []
+        if "obj_adjectives" in ev["annotations"]:
+            evidence_context["obj_adjectives"] = ev["annotations"]["obj_adjectives"]
+        else:
+            evidence_context["obj_adjectives"] = []
 
         # Parsing document
         dart = ev["text_refs"]["DART"]
@@ -181,13 +190,15 @@ def get_event(statement, t, es):
         adjectives = event["delta"]["adjectives"]
 
     if "context" in event:
-        if "time" in event["context"]:
+        if "time" in event["context"] and event["context"]["time"] != None:
             time_context["start"] = get_event_time(event["context"]["time"]["start"])
             time_context["end"] = get_event_time(event["context"]["time"]["end"])
 
         if "geo_location" in event["context"] and event["context"]["geo_location"] != None:
-            geo_id = event["context"]["geo_location"]["db_refs"]["GEOID"]
-            geo = es.term_query("geo", "geo_id", geo_id)
+            geo = None
+            if "GEOID" in event["context"]["geo_location"]["db_refs"]:
+                geo_id = event["context"]["geo_location"]["db_refs"]["GEOID"]
+                geo = es.term_query("geo", "geo_id", geo_id)
             if geo != None:
                 geo_context["name"] = geo["name"]
                 geo_context["location"] = {
