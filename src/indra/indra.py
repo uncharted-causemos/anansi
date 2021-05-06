@@ -1,4 +1,5 @@
 import time
+import statistics
 from utils import get_event_time, epoch_millis
 
 
@@ -220,8 +221,24 @@ def get_candidates(event):
     """
     candidates = []
     if "WM" in event["concept"]["db_refs"]:
-        flat_list = event["concept"]["db_refs"]["WM_FLAT"]
+        flat_list = []
         orig_list = event["concept"]["db_refs"]["WM"] 
+
+        # In case the flattened list is not avaialble
+        if "WM_FLAT" in event["concept"]["db_refs"]:
+            flat_list = event["concept"]["db_refs"]["WM_FLAT"]
+        else:
+            for idx, candidate in enumerate(orig_list):
+                theme_grounding = candidate[0][0]
+                other_groundings = [entry[0].split('/')[-1] for entry in candidate[1:] if entry]
+                flat_grounding = '_'.join([theme_grounding] + other_groundings)
+                score = statistics.mean([entry[1] for entry in candidate if entry is not None])
+                flat_list.append({
+                    "grounding": flat_grounding,
+                    "score": score,
+                    "name": "dummy" # name not used
+                })
+
 
         for idx, _ in enumerate(flat_list):
             name = flat_list[idx]["grounding"]
