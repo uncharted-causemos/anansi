@@ -75,13 +75,11 @@ new_stmts = response["new_stmts"]
 new_evidence = response["new_evidence"]
 new_refinements = response["new_refinements"]
 beliefs = response["beliefs"]
-print(len(new_stmts))
-print(len(new_evidence))
-print(len(new_refinements))
-print(len(beliefs))
+logger.info(f"{len(new_stmts)} new statements.")
+logger.info(f"{len(new_evidence)} new pieces of evidence.")
+logger.info(f"{len(new_refinements)} new refinements.")
+logger.info(f"{len(beliefs)} new belief scores.")
 
-if len(new_stmts) > 0:
-  print(list(new_stmts.values())[0])
 
 # 5. Pivot "new_stmts" into array of INDRA statements and join with "beliefs", transform and index new statements to project index
 counter = 0
@@ -89,6 +87,9 @@ es_buffer = []
 for statement in new_stmts.values():
   # FIXME: we're not currently handling updates to existing statements, only adding new ones
   # Need to confirm what needs to be done re: refinements/enhancements of existing statements
+  matches_hash = str(statement["matches_hash"])
+  statement["evidence"] = new_evidence.get(matches_hash)
+  statement["belief"] = beliefs.get(matches_hash)
   result = influence_transform(statement, source_es)
   counter = counter + 1
   es_buffer.append(result)
