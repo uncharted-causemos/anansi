@@ -5,6 +5,7 @@ from smart_open import open
 from elastic import Elastic
 from requests.auth import HTTPBasicAuth
 from indra import IndraAPI
+from dart import document_transform, get_CDRs
 import requests
 
 FORMAT = "%(asctime)-25s %(levelname)-8s %(message)s"
@@ -25,6 +26,10 @@ SOURCE_ES_PORT = os.environ.get("SOURCE_ES_PORT")
 # Where to index documents
 TARGET_ES_HOST = os.environ.get("TARGET_ES_HOST")
 TARGET_ES_PORT = os.environ.get("TARGET_ES_PORT")
+
+DART_HOST = os.environ.get("DART_HOST");
+DART_USER = os.environ.get("DART_USER");
+DART_PASS= os.environ.get("DART_PASS");
 
 # Request
 PROJECT_EXTENSION_ID = os.environ.get("PROJECT_EXTENSION_ID")
@@ -63,6 +68,23 @@ extension = source_es.term_query("project-extension", "_id", PROJECT_EXTENSION_I
 projectId = extension["project_id"]
 records = extension["records"]
 logger.info(f"Found extension with {len(records)} records for project: {projectId}")
+
+
+# FIXME: batch
+# Process CDR
+doc_ids = []
+for record in records:
+    doc_ids.append(record["document_id"])
+doc_ids = list(set(doc_ids))
+
+cdrs = get_CDRs(DART_HOST, DART_USER, DART_PASS, doc_ids)
+es_buffer = []
+for cdr in cdrs:
+  es_buffer.append(document_transform(cdr))
+target_es.bulk_write('corpus', es_buffer)
+
+
+
 
 # 3. Send request to INDRA for reassembly
 logger.info("Sending request to INDRA for reassembly")

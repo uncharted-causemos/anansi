@@ -156,7 +156,7 @@ def get_evidence(statement, es):
         if dart in document_context_cache:
             document_context = document_context_cache[dart]
         else:
-            cdr = es.term_query("corpus", "doc_id", dart)
+            cdr = es.term_query("corpus", "id", dart)
             if cdr != None:
                 document_context["file_type"] = cdr["file_type"]
                 document_context["author"] = cdr["author"]
@@ -165,7 +165,12 @@ def get_evidence(statement, es):
                 document_context["title"] = cdr["doc_title"]
                 document_context["ner_analytics"] = cdr["ner_analytics"]
                 document_context["analysis"] = cdr["analysis"]
-                document_context["publication_date"] = cdr["publication_date"]
+
+                document_context["publication_date"] = {}
+                document_context["publication_date"]["date"] = cdr["publication_date"]["date"]
+                document_context["publication_date"]["year"] = cdr["publication_date"]["year"]
+                document_context["publication_date"]["month"] = cdr["publication_date"]["month"]
+                document_context["publication_date"]["day"] = cdr["publication_date"]["day"]
             document_context["doc_id"] = dart
             document_context_cache[dart] = document_context
 
