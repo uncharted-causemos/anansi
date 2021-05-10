@@ -70,29 +70,33 @@ records = extension["records"]
 logger.info(f"Found extension with {len(records)} records for project: {projectId}")
 
 
-# FIXME: batch
-# Process CDR
+# 3. Process CDR
 doc_ids = []
 for record in records:
     doc_ids.append(record["document_id"])
 doc_ids = list(set(doc_ids))
 
 cdrs = get_CDRs(DART_HOST, DART_USER, DART_PASS, doc_ids)
+counter = 0
 es_buffer = []
 for cdr in cdrs:
-  es_buffer.append(document_transform(cdr))
+    es_buffer.append(document_transform(cdr))
+    counter = counter + 1
+    if counter % 500 == 0:
+        logger.info(f"\tIndexing ... {counter}")
+        target_es.bulk_write('corpus', es_buffer)
+
 target_es.bulk_write('corpus', es_buffer)
 
 
 
 
-# 3. Send request to INDRA for reassembly
+# 4. Send request to INDRA for reassembly
 logger.info("Sending request to INDRA for reassembly")
 indra = IndraAPI(INDRA_HOST)
 response = indra.add_project_records(projectId, records)
 
-# 4. Parse INDRA response 
-
+# 5. Parse INDRA response
 new_stmts = response["new_stmts"]
 new_evidence = response["new_evidence"]
 new_refinements = response["new_refinements"]
@@ -103,7 +107,7 @@ logger.info(f"{len(new_refinements)} new refinements.")
 logger.info(f"{len(beliefs)} new belief scores.")
 
 
-# 5. Pivot "new_stmts" into array of INDRA statements and join with "beliefs", transform and index new statements to project index
+# 6. Pivot "new_stmts" into array of INDRA statements and join with "beliefs", transform and index new statements to project index
 counter = 0
 es_buffer = []
 for statement in new_stmts.values():
@@ -125,7 +129,7 @@ if len(es_buffer) > 0:
     target_es.bulk_write(projectId, es_buffer)
     es_buffer = []
 
-# 6. Mark as completed ??
+# 7. Mark as completed ??
 logger.info(f"Updated statements for project {projectId}.")
 
 

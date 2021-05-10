@@ -125,7 +125,7 @@ def get_CDRs(api_base, username, password, doc_ids):
     for doc_id in doc_ids:
         url = api_base + "/cdrs/" + doc_id
         logger.info(f"Processing {url}")
-        response = requests.get(url, auth=HTTPBasicAuth(username, password))
+        response = requests.get(url, auth=HTTPBasicAuth(username, password), timeout=10)
 
         if response.status_code > 200:
             logger.info(f"Cound not retrieve CDR for {doc_id}")
