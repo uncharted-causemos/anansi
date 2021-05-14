@@ -1,4 +1,5 @@
 import time
+import statistics
 from utils import get_event_time, epoch_millis
 
 
@@ -136,17 +137,26 @@ def get_evidence(statement, es):
         evidence_context["source_hash"] = ev["source_hash"]
         evidence_context["hedging_words"] = hedgings
         evidence_context["contradiction_words"] = negated_texts
-        evidence_context["subj_adjectives"] = ev["annotations"]["subj_adjectives"]
-        evidence_context["subj_polarity"] = ev["annotations"]["subj_polarity"]
-        evidence_context["obj_adjectives"] = ev["annotations"]["obj_adjectives"]
-        evidence_context["obj_polarity"] = ev["annotations"]["obj_polarity"]
+        if "subj_polarity" in ev["annotations"]:
+            evidence_context["subj_polarity"] = ev["annotations"]["subj_polarity"]
+        if "obj_polarity" in ev["annotations"]:
+            evidence_context["obj_polarity"] = ev["annotations"]["obj_polarity"]
+
+        if "subj_adjectives" in ev["annotations"]:
+            evidence_context["subj_adjectives"] = ev["annotations"]["subj_adjectives"]
+        else:
+            evidence_context["subj_adjectives"] = []
+        if "obj_adjectives" in ev["annotations"]:
+            evidence_context["obj_adjectives"] = ev["annotations"]["obj_adjectives"]
+        else:
+            evidence_context["obj_adjectives"] = []
 
         # Parsing document
         dart = ev["text_refs"]["DART"]
         if dart in document_context_cache:
             document_context = document_context_cache[dart]
         else:
-            cdr = es.term_query("corpus", "doc_id", dart)
+            cdr = es.term_query("corpus", "id", dart)
             if cdr != None:
                 document_context["file_type"] = cdr["file_type"]
                 document_context["author"] = cdr["author"]
@@ -155,7 +165,12 @@ def get_evidence(statement, es):
                 document_context["title"] = cdr["doc_title"]
                 document_context["ner_analytics"] = cdr["ner_analytics"]
                 document_context["analysis"] = cdr["analysis"]
-                document_context["publication_date"] = cdr["publication_date"]
+
+                document_context["publication_date"] = {}
+                document_context["publication_date"]["date"] = cdr["publication_date"]["date"]
+                document_context["publication_date"]["year"] = cdr["publication_date"]["year"]
+                document_context["publication_date"]["month"] = cdr["publication_date"]["month"]
+                document_context["publication_date"]["day"] = cdr["publication_date"]["day"]
             document_context["doc_id"] = dart
             document_context_cache[dart] = document_context
 
@@ -180,13 +195,15 @@ def get_event(statement, t, es):
         adjectives = event["delta"]["adjectives"]
 
     if "context" in event:
-        if "time" in event["context"]:
+        if "time" in event["context"] and event["context"]["time"] != None:
             time_context["start"] = get_event_time(event["context"]["time"]["start"])
             time_context["end"] = get_event_time(event["context"]["time"]["end"])
 
         if "geo_location" in event["context"] and event["context"]["geo_location"] != None:
-            geo_id = event["context"]["geo_location"]["db_refs"]["GEOID"]
-            geo = es.term_query("geo", "geo_id", geo_id)
+            geo = None
+            if "GEOID" in event["context"]["geo_location"]["db_refs"]:
+                geo_id = event["context"]["geo_location"]["db_refs"]["GEOID"]
+                geo = es.term_query("geo", "geo_id", geo_id)
             if geo != None:
                 geo_context["name"] = geo["name"]
                 geo_context["location"] = {
@@ -220,8 +237,24 @@ def get_candidates(event):
     """
     candidates = []
     if "WM" in event["concept"]["db_refs"]:
-        flat_list = event["concept"]["db_refs"]["WM_FLAT"]
+        flat_list = []
         orig_list = event["concept"]["db_refs"]["WM"] 
+
+        # In case the flattened list is not avaialble
+        if "WM_FLAT" in event["concept"]["db_refs"]:
+            flat_list = event["concept"]["db_refs"]["WM_FLAT"]
+        else:
+            for idx, candidate in enumerate(orig_list):
+                theme_grounding = candidate[0][0]
+                other_groundings = [entry[0].split('/')[-1] for entry in candidate[1:] if entry]
+                flat_grounding = '_'.join([theme_grounding] + other_groundings)
+                score = statistics.mean([entry[1] for entry in candidate if entry is not None])
+                flat_list.append({
+                    "grounding": flat_grounding,
+                    "score": score,
+                    "name": "dummy" # name not used
+                })
+
 
         for idx, _ in enumerate(flat_list):
             name = flat_list[idx]["grounding"]

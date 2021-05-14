@@ -13,10 +13,14 @@ class IndraAPI:
         r = requests.get(self._url + "/health")
         return r.json()
 
-    def add_project_records(self, reader_records):
+    def add_project_records(self, project_id, reader_records):
+        payload = {
+            "project_id": project_id,
+            "records": reader_records
+        }
         """
         Submits document_id, reader, and storage key tuples to INDRA for incremental assembly
         """
-        r = requests.post(self._url + "/assembly/add_project_records", data = reader_records)
+        r = requests.post(self._url + "/assembly/add_project_records", json = payload)
         return r.json()
         
