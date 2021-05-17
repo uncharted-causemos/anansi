@@ -4,7 +4,6 @@ import os
 from smart_open import open
 from elastic import Elastic
 from requests.auth import HTTPBasicAuth
-from indra import IndraAPI
 from dart import document_transform, get_CDRs
 import requests
 
@@ -12,7 +11,7 @@ FORMAT = "%(asctime)-25s %(levelname)-8s %(message)s"
 logging.basicConfig(format=FORMAT, level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from indra import influence_transform, metadata_transfrom, IndraAPI
+from indra import influence_transform, metadata_transfrom, evidence_transform, IndraAPI
 from utils import json_file_content
 
 
@@ -38,12 +37,12 @@ PROJECT_EXTENSION_ID = os.environ.get("PROJECT_EXTENSION_ID")
 # Fake payload
 FAKE_INDRA_REQUEST = {
   "id": "xyz",
-  "project_id": "integration-test-1",
+  "project_id": "project-3197ad05-dfe9-4b87-b14c-952cdc9ed650",
   "records": [
       {
-          "document_id": "9a8d151e5f40491d47f4dc9b97d47fc8",
+          "document_id": "570bc75dba3cfb995445932c57329775",
           "identity": "eidos",
-          "storage_key": "d87fdf3c-2ca9-47af-89e8-3321cf677e59.jsonld",
+          "storage_key": "a5ff1d64-1371-4edd-ad3e-47d8c899e6bc.jsonld",
           "version": "1.1.0"
       }
   ]
@@ -62,12 +61,14 @@ logger.info(f"PROJECT_EXTENSION_ID: {PROJECT_EXTENSION_ID}")
 
 # 1. Fetch project-extension from source-es by id
 logger.info("Fetching project-extension")
-extension = source_es.term_query("project-extension", "_id", PROJECT_EXTENSION_ID)
+# FIXME
+# extension = source_es.term_query("project-extension", "_id", PROJECT_EXTENSION_ID)
+extension = FAKE_INDRA_REQUEST
 
 # 2. Extract relevant fields from project-extension document
-projectId = extension["project_id"]
+project_id = extension["project_id"]
 records = extension["records"]
-logger.info(f"Found extension with {len(records)} records for project: {projectId}")
+logger.info(f"Found extension with {len(records)} records for project: {project_id}")
 
 
 # 3. Process CDR
@@ -94,7 +95,7 @@ target_es.bulk_write('corpus', es_buffer)
 # 4. Send request to INDRA for reassembly
 logger.info("Sending request to INDRA for reassembly")
 indra = IndraAPI(INDRA_HOST)
-response = indra.add_project_records(projectId, records)
+response = indra.add_project_records(project_id, records)
 
 # 5. Parse INDRA response
 new_stmts = response["new_stmts"]
@@ -106,6 +107,8 @@ logger.info(f"{len(new_evidence)} new pieces of evidence.")
 logger.info(f"{len(new_refinements)} new refinements.")
 logger.info(f"{len(beliefs)} new belief scores.")
 
+# FIXME
+new_stmts = {}
 
 # 6. Pivot "new_stmts" into array of INDRA statements and join with "beliefs", transform and index new statements to project index
 counter = 0
@@ -121,16 +124,25 @@ for statement in new_stmts.values():
   es_buffer.append(result)
   if counter % 500 == 0:
       logger.info(f"\tIndexing ... {counter}")
-      target_es.bulk_write(projectId, es_buffer)
+      target_es.bulk_write(project_id, es_buffer)
       es_buffer = []
 
 if len(es_buffer) > 0:
     logger.info(f"\tIndexing ... {counter}")
-    target_es.bulk_write(projectId, es_buffer)
+    target_es.bulk_write(project_id, es_buffer)
     es_buffer = []
 
-# 7. Mark as completed ??
-logger.info(f"Updated statements for project {projectId}.")
+# 7 Merge new evidence
+# FIXME: Not effcient
+evidnece_to_merge = []
+for key, evidence in new_evidence.items():
+    if key not in new_stmts: 
+        print(key)
+        stmt = source_es.term_query(project_id, "matches_hash", key)
+        print(stmt)
+        # for ev in evidence:
+        #     stmt["evidence"].append(evidence_transform(ev, source_es))
 
-
+# 8. Mark as completed ??
+logger.info(f"Updated statements for project {project_id}.")
 

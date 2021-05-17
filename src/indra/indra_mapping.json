@@ -11,6 +11,9 @@
             "type": "date",
             "format": "epoch_millis"
         },
+        "matches_hash": {
+          "type": "long"
+        },
         "wm": {
             "properties": {
                 "num_evidence": {
