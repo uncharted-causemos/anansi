@@ -37,7 +37,7 @@ PROJECT_EXTENSION_ID = os.environ.get("PROJECT_EXTENSION_ID")
 # Fake payload
 FAKE_INDRA_REQUEST = {
   "id": "xyz",
-  "project_id": "project-3197ad05-dfe9-4b87-b14c-952cdc9ed650",
+  "project_id": "project-fd729e8d-6686-4761-ab7d-2eb906044a65",
   "records": [
       {
           "document_id": "570bc75dba3cfb995445932c57329775",
@@ -132,16 +132,22 @@ if len(es_buffer) > 0:
     target_es.bulk_write(project_id, es_buffer)
     es_buffer = []
 
-# 7 Merge new evidence
-# FIXME: Not effcient
+# 7 Merge new evidence 
+# Not very efficient, should do batch queries and partial fetches + update
 evidnece_to_merge = []
+update_buffer = []
 for key, evidence in new_evidence.items():
     if key not in new_stmts: 
-        print(key)
         stmt = source_es.term_query(project_id, "matches_hash", key)
-        print(stmt)
-        # for ev in evidence:
-        #     stmt["evidence"].append(evidence_transform(ev, source_es))
+        if stmt == None:
+            continue
+
+        for ev in evidence:
+            stmt["evidence"].append(evidence_transform(ev, source_es))
+        update_buffer.append(stmt)
+target_es.bulk_write(project_id, update_buffer)
+
+
 
 # 8. Mark as completed ??
 logger.info(f"Updated statements for project {project_id}.")
