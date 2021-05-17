@@ -11,7 +11,7 @@ FORMAT = "%(asctime)-25s %(levelname)-8s %(message)s"
 logging.basicConfig(format=FORMAT, level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from indra import influence_transform, metadata_transfrom, evidence_transform, IndraAPI
+from indra import influence_transform, metadata_transfrom, evidence_transform, get_wm, IndraAPI
 from utils import json_file_content
 
 
@@ -61,8 +61,9 @@ logger.info(f"PROJECT_EXTENSION_ID: {PROJECT_EXTENSION_ID}")
 
 # 1. Fetch project-extension from source-es by id
 logger.info("Fetching project-extension")
-# FIXME
-# extension = source_es.term_query("project-extension", "_id", PROJECT_EXTENSION_ID)
+
+extension = source_es.term_query("project-extension", "_id", PROJECT_EXTENSION_ID)
+# FIXME - temporary test
 extension = FAKE_INDRA_REQUEST
 
 # 2. Extract relevant fields from project-extension document
@@ -107,15 +108,13 @@ logger.info(f"{len(new_evidence)} new pieces of evidence.")
 logger.info(f"{len(new_refinements)} new refinements.")
 logger.info(f"{len(beliefs)} new belief scores.")
 
-# FIXME
+# FIXME for testing evidence merge
 new_stmts = {}
 
 # 6. Pivot "new_stmts" into array of INDRA statements and join with "beliefs", transform and index new statements to project index
 counter = 0
 es_buffer = []
 for statement in new_stmts.values():
-  # FIXME: we're not currently handling updates to existing statements, only adding new ones
-  # Need to confirm what needs to be done re: refinements/enhancements of existing statements
   matches_hash = str(statement["matches_hash"])
   statement["evidence"] = new_evidence.get(matches_hash)
   statement["belief"] = beliefs.get(matches_hash)
@@ -144,6 +143,8 @@ for key, evidence in new_evidence.items():
 
         for ev in evidence:
             stmt["evidence"].append(evidence_transform(ev, source_es))
+
+        stmt["wm"] = get_wm(stmt["evidence"], stmt["subj"], stmt["obj"])
         update_buffer.append(stmt)
 target_es.bulk_write(project_id, update_buffer)
 
