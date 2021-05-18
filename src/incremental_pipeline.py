@@ -79,6 +79,7 @@ for record in records:
 doc_ids = list(set(doc_ids))
 
 cdrs = get_CDRs(DART_HOST, DART_USER, DART_PASS, doc_ids)
+
 counter = 0
 es_buffer = []
 for cdr in cdrs:
@@ -88,13 +89,12 @@ for cdr in cdrs:
         logger.info(f"\tIndexing ... {counter}")
         target_es.bulk_write('corpus', es_buffer)
 
-target_es.bulk_write('corpus', es_buffer)
-
-
+if len(es_buffer) > 0:
+    target_es.bulk_write('corpus', es_buffer)
 
 
 # 4. Send request to INDRA for reassembly
-logger.info("Sending request to INDRA for reassembly")
+logger.info("Sending project-extension request to INDRA for reassembly")
 indra = IndraAPI(INDRA_HOST)
 response = indra.add_project_records(project_id, records)
 
@@ -103,15 +103,18 @@ new_stmts = response["new_stmts"]
 new_evidence = response["new_evidence"]
 new_refinements = response["new_refinements"]
 beliefs = response["beliefs"]
+logger.info("=" * 50)
 logger.info(f"{len(new_stmts)} new statements.")
 logger.info(f"{len(new_evidence)} new pieces of evidence.")
 logger.info(f"{len(new_refinements)} new refinements.")
-logger.info(f"{len(beliefs)} new belief scores.")
+logger.info(f"{len(beliefs)} belief scores.")
+logger.info("=" * 50)
 
-# FIXME for testing evidence merge
-new_stmts = {}
+# new_stmts = {} # Testing
 
 # 6. Pivot "new_stmts" into array of INDRA statements and join with "beliefs", transform and index new statements to project index
+logger.info("")
+logger.info("Processing new statements")
 counter = 0
 es_buffer = []
 for statement in new_stmts.values():
@@ -133,6 +136,8 @@ if len(es_buffer) > 0:
 
 # 7 Merge new evidence 
 # Not very efficient, should do batch queries and partial fetches + update
+logger.info("")
+logger.info("Processing updated statements")
 evidnece_to_merge = []
 update_buffer = []
 for key, evidence in new_evidence.items():
@@ -146,10 +151,11 @@ for key, evidence in new_evidence.items():
 
         stmt["wm"] = get_wm(stmt["evidence"], stmt["subj"], stmt["obj"])
         update_buffer.append(stmt)
-target_es.bulk_write(project_id, update_buffer)
 
+if len(update_buffer) > 0:
+    logger.info(f"\tIndexing ... {len(update_buffer)}")
+    target_es.bulk_write(project_id, update_buffer)
 
 
 # 8. Mark as completed ??
 logger.info(f"Updated statements for project {project_id}.")
-
