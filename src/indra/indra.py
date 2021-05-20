@@ -29,6 +29,7 @@ def influence_transform(statement, es):
 
     return {
         "id": statement["id"],
+        "matches_hash": statement["matches_hash"],
         "belief": statement["belief"],
         "evidence": evidence,
         "modified_at": round(time.time() * 1000),
@@ -111,6 +112,69 @@ def get_wm(evidence, subj, obj):
 # Hack for a quick and dirty cache
 document_context_cache = {}
 
+def evidence_transform(ev, es):
+    """
+    Transform and enrich a single evidence
+    """
+    evidence_context = {}
+    document_context = {}
+    hedgings = []
+    negated_texts = []
+
+    # Parsing evidence
+    if "epistemics" in ev and "hedgings" in ev["epistemics"]: 
+        hedgings = ev["epistemics"]["hedgings"]
+
+    if "negated_texts" in ev["annotations"]:
+        negated_texts = ev["annotations"]["negated_texts"]
+
+    evidence_context["source_api"] = ev["source_api"]
+    evidence_context["text"] = ev["text"]
+    evidence_context["agents_text"] = ev["annotations"]["agents"]["raw_text"]
+    evidence_context["source_hash"] = ev["source_hash"]
+    evidence_context["hedging_words"] = hedgings
+    evidence_context["contradiction_words"] = negated_texts
+    if "subj_polarity" in ev["annotations"]:
+        evidence_context["subj_polarity"] = ev["annotations"]["subj_polarity"]
+    if "obj_polarity" in ev["annotations"]:
+        evidence_context["obj_polarity"] = ev["annotations"]["obj_polarity"]
+
+    if "subj_adjectives" in ev["annotations"]:
+        evidence_context["subj_adjectives"] = ev["annotations"]["subj_adjectives"]
+    else:
+        evidence_context["subj_adjectives"] = []
+    if "obj_adjectives" in ev["annotations"]:
+        evidence_context["obj_adjectives"] = ev["annotations"]["obj_adjectives"]
+    else:
+        evidence_context["obj_adjectives"] = []
+
+    # Parsing document
+    dart = ev["text_refs"]["DART"]
+    if dart in document_context_cache:
+        document_context = document_context_cache[dart]
+    else:
+        cdr = es.term_query("corpus", "id", dart)
+        if cdr != None:
+            document_context["file_type"] = cdr["file_type"]
+            document_context["author"] = cdr["author"]
+            document_context["document_source"] = cdr["collection_type"] # ????
+            document_context["publisher_name"] = cdr["publisher_name"]
+            document_context["title"] = cdr["doc_title"]
+            document_context["ner_analytics"] = cdr["ner_analytics"]
+            document_context["analysis"] = cdr["analysis"]
+
+            document_context["publication_date"] = {}
+            document_context["publication_date"]["date"] = int(cdr["publication_date"]["date"])
+            document_context["publication_date"]["year"] = cdr["publication_date"]["year"]
+            document_context["publication_date"]["month"] = cdr["publication_date"]["month"]
+            document_context["publication_date"]["day"] = cdr["publication_date"]["day"]
+        document_context["doc_id"] = dart
+        document_context_cache[dart] = document_context
+
+    return { "document_context": document_context, "evidence_context": evidence_context }
+
+
+
 def get_evidence(statement, es):
     """
     Parse evidnece into evidence_context and document_context
@@ -119,66 +183,8 @@ def get_evidence(statement, es):
     result = []
 
     for ev in evidence:
-        evidence_context = {}
-        document_context = {}
-        hedgings = []
-        negated_texts = []
-
-        # Parsing evidence
-        if "epistemics" in ev and "hedgings" in ev["epistemics"]: 
-            hedgings = ev["epistemics"]["hedgings"]
-
-        if "negated_texts" in ev["annotations"]:
-            negated_texts = ev["annotations"]["negated_texts"]
-
-        evidence_context["source_api"] = ev["source_api"]
-        evidence_context["text"] = ev["text"]
-        evidence_context["agents_text"] = ev["annotations"]["agents"]["raw_text"]
-        evidence_context["source_hash"] = ev["source_hash"]
-        evidence_context["hedging_words"] = hedgings
-        evidence_context["contradiction_words"] = negated_texts
-        if "subj_polarity" in ev["annotations"]:
-            evidence_context["subj_polarity"] = ev["annotations"]["subj_polarity"]
-        if "obj_polarity" in ev["annotations"]:
-            evidence_context["obj_polarity"] = ev["annotations"]["obj_polarity"]
-
-        if "subj_adjectives" in ev["annotations"]:
-            evidence_context["subj_adjectives"] = ev["annotations"]["subj_adjectives"]
-        else:
-            evidence_context["subj_adjectives"] = []
-        if "obj_adjectives" in ev["annotations"]:
-            evidence_context["obj_adjectives"] = ev["annotations"]["obj_adjectives"]
-        else:
-            evidence_context["obj_adjectives"] = []
-
-        # Parsing document
-        dart = ev["text_refs"]["DART"]
-        if dart in document_context_cache:
-            document_context = document_context_cache[dart]
-        else:
-            cdr = es.term_query("corpus", "id", dart)
-            if cdr != None:
-                document_context["file_type"] = cdr["file_type"]
-                document_context["author"] = cdr["author"]
-                document_context["document_source"] = cdr["collection_type"] # ????
-                document_context["publisher_name"] = cdr["publisher_name"]
-                document_context["title"] = cdr["doc_title"]
-                document_context["ner_analytics"] = cdr["ner_analytics"]
-                document_context["analysis"] = cdr["analysis"]
-
-                document_context["publication_date"] = {}
-                document_context["publication_date"]["date"] = cdr["publication_date"]["date"]
-                document_context["publication_date"]["year"] = cdr["publication_date"]["year"]
-                document_context["publication_date"]["month"] = cdr["publication_date"]["month"]
-                document_context["publication_date"]["day"] = cdr["publication_date"]["day"]
-            document_context["doc_id"] = dart
-            document_context_cache[dart] = document_context
-
-        result.append({
-            "evidence_context": evidence_context,
-            "document_context": document_context
-        })
-        return result
+        result.append(evidence_transform(ev, es));
+    return result
 
 
 def get_event(statement, t, es):

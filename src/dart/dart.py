@@ -122,13 +122,17 @@ def get_CDRs(api_base, username, password, doc_ids):
     Fetch CDRs as JSONs from DART service
     """
     cdrs = []
-    for doc_id in doc_ids:
-        url = api_base + "/cdrs/" + doc_id
-        logger.info(f"Processing {url}")
-        response = requests.get(url, auth=HTTPBasicAuth(username, password), timeout=10)
+    try:
+        for doc_id in doc_ids:
+            url = api_base + "/cdrs/" + doc_id
+            logger.info(f"Processing {url}")
+            response = requests.get(url, auth=HTTPBasicAuth(username, password), timeout=10)
 
-        if response.status_code > 200:
-            logger.info(f"Cound not retrieve CDR for {doc_id}")
-            continue
-        cdrs.append(response.json())
-    return cdrs
+            if response.status_code > 200:
+                logger.info(f"Cound not retrieve CDR for {doc_id}")
+                continue
+            cdrs.append(response.json())
+        return cdrs
+    except:
+        logger.error("Failed to retrieve CDRs, return empty list")
+        return []
