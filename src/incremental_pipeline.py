@@ -138,7 +138,6 @@ if len(es_buffer) > 0:
 # Not very efficient, should do batch queries and partial fetches + update
 logger.info("")
 logger.info("Processing updated statements")
-evidnece_to_merge = []
 update_buffer = []
 for key, evidence in new_evidence.items():
     if key not in new_stmts: 
