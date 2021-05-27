@@ -90,6 +90,8 @@ def get_NER(doc):
     word_counter["org"] = {}
     word_counter["loc"] = {}
 
+    location_black_list = ["east", "west", "north", "south", "earth", "central"]
+
     for item in contents:
         if "value" in item == False or "tag" in item == False:
             continue
@@ -97,9 +99,12 @@ def get_NER(doc):
         tag = item["tag"].lower()
         if tag != "loc" and tag != "org":
             continue
-        
+
         # FIXME: need to scrub text
         value = item.get("value", "")
+
+        if tag == "loc" and value.lower() in location_black_list:
+            continue
 
         if value in word_counter[tag]:
             word_counter[tag][value] = word_counter[tag][value] + 1
