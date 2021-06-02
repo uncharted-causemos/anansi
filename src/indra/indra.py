@@ -164,10 +164,11 @@ def evidence_transform(ev, es):
             document_context["analysis"] = cdr["analysis"]
 
             document_context["publication_date"] = {}
-            document_context["publication_date"]["date"] = int(cdr["publication_date"]["date"])
-            document_context["publication_date"]["year"] = cdr["publication_date"]["year"]
-            document_context["publication_date"]["month"] = cdr["publication_date"]["month"]
-            document_context["publication_date"]["day"] = cdr["publication_date"]["day"]
+            if "publication_date" in cdr and cdr["publication_date"] is not None:
+                document_context["publication_date"]["date"] = int(cdr["publication_date"]["date"])
+                document_context["publication_date"]["year"] = cdr["publication_date"]["year"]
+                document_context["publication_date"]["month"] = cdr["publication_date"]["month"]
+                document_context["publication_date"]["day"] = cdr["publication_date"]["day"]
         document_context["doc_id"] = dart
         document_context_cache[dart] = document_context
 

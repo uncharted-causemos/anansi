@@ -64,7 +64,7 @@ if __name__ == "__main__":
         keys = []
         for i, (k, v) in enumerate(filtered_objects.items()):
             keys.append(v)
-            line = " | ".join([str(i).ljust(5), k.ljust(60), toMB(v["size"]).rjust(20), str(v["last_modified"]).rjust(30)])
+            line = " | ".join([str(i).ljust(5), k.ljust(60), toMB(v.get("size", 0)).rjust(20), str(v.get("last_modified", "??")).rjust(30)])
             print(line)
         
         # User input
