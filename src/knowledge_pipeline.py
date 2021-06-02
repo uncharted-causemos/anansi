@@ -73,8 +73,8 @@ logger.info(f"INDRA: {INDRA_DATASET}")
 logger.info(f"DART: {DART_DATA}")
 
 # 2. Load CDRs
-logger.info("Indexing CDRs")
-JSONL_ETL_wrapper(DART_DATA, document_transform, "corpus")
+# logger.info("Indexing CDRs")
+# JSONL_ETL_wrapper(DART_DATA, document_transform, "corpus")
 
 
 # 3. Load INDRA statements
