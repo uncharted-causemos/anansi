@@ -10,7 +10,10 @@ def document_transform(doc):
     Transforms DART CDR to Causemos format.
     """
     extracted_metadata = doc["extracted_metadata"]
-    publication_date = get_event_time(extracted_metadata["CreationDate"])
+
+    publication_date = None
+    if "CreationDate" in extracted_metadata:
+        publication_date = get_event_time(extracted_metadata["CreationDate"])
 
     ner = get_NER(doc)
     analysis = get_analysis(doc)
@@ -18,14 +21,14 @@ def document_transform(doc):
     # print(publication_date)
     return {
         "id": doc["document_id"],
-        "file_name": doc["source_uri"],
-        "file_type": doc["content_type"],
+        "file_name": doc.get("source_uri", ""),
+        "file_type": doc.get("content_type", "") ,
         "doc_title": extracted_metadata.get("Title", ""),
         "author": extracted_metadata.get("Author", ""),
         "publisher_name": extracted_metadata.get("Publisher", ""),
         "publication_date": publication_date,
-        "extracted_text":   doc["extracted_text"],
-        "collection_type":  doc["capture_source"],
+        "extracted_text":   doc.get("extracted_text", ""),
+        "collection_type":  doc.get("capture_source", ""),
         "ner_analytics": ner,
         "analysis": analysis
     }
