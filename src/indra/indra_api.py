@@ -1,4 +1,5 @@
 import requests
+import json
 
 class IndraAPI:
     _url = None
@@ -21,6 +22,9 @@ class IndraAPI:
         """
         Submits document_id, reader, and storage key tuples to INDRA for incremental assembly
         """
-        r = requests.post(self._url + "/assembly/add_project_records", json = payload)
+        print("*************************")
+        print(json.dumps(payload))
+        print("*************************")
+        r = requests.post(self._url + "/assembly/add_project_records", json = payload, timeout=1200)
         return r.json()
         
