@@ -66,7 +66,7 @@ def fetch_project_extension(project_extension_id, SOURCE_ES_HOST, SOURCE_ES_PORT
     # 1. Fetch project-extension from source-es by id
     print("Fetching project-extension")
     extension = source_es.term_query(
-        "project-extension", "_id", project_extension_id)
+        "project-extension", "id", project_extension_id)
     project_id = extension["project_id"]
     records = extension["records"]
     print(
@@ -175,8 +175,11 @@ def mark_completed(project_id):
 
 
 with Flow("incremental assembly", run_config=LocalRun(labels=["non-dask"])) as flow:
-    PROJECT_EXTENSION_ID = Parameter(
-        "PROJECT_EXTENSION_ID", default="ae814f9e-b9b3-46ca-b310-53f83fa1ec76")
+    PROJECT_EXTENSION_ID = Parameter("PROJECT_EXTENSION_ID")
+
+    if PROJECT_EXTENSION_ID is None:
+        raise ValueError("Missing parameter PROJECT_EXTENSION_ID")
+
     (
         INDRA_HOST,
         SOURCE_ES_HOST,
@@ -227,10 +230,14 @@ should_register = True
 if (should_register):
     flow.register(project_name="project")
 else:
+    PROJECT_EXTENSION_ID = os.environ.get("PROJECT_EXTENSION_ID")  # "http://wm.indra.bio/"
+    if PROJECT_EXTENSION_ID is None:
+        raise ValueError("Missing required environment variable PROJECT_EXTENSION_ID")
+
     state = flow.run(
         executor=LocalExecutor(),
         parameters={
-            "PROJECT_EXTENSION_ID": "ae814f9e-b9b3-46ca-b310-53f83fa1ec76"
+            "PROJECT_EXTENSION_ID": PROJECT_EXTENSION_ID
         }
     )
 
