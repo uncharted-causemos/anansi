@@ -28,7 +28,7 @@ def document_transform(doc):
         "publisher_name": extracted_metadata.get("Publisher", ""),
         "publication_date": publication_date,
         "extracted_text":   doc.get("extracted_text", ""),
-        "collection_type":  doc.get("capture_source", ""),
+        "collection_type":  doc.get("collection_type", ""),
         "ner_analytics": ner,
         "analysis": analysis
     }

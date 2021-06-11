@@ -9,27 +9,24 @@ from dart import document_transform, get_CDRs
 
 
 @task(log_stdout=True)
-def read_environment_variables() -> Tuple[str, str, str, str, str, str, str, str]:
+def read_environment_variables() -> Tuple[str, str, str, str, str, str]:
     # Environment
     INDRA_HOST = os.environ.get("INDRA_HOST")  # "http://wm.indra.bio/"
 
     # Resources like geolocation and corpus, generally speaking source/target will be the same
-    SOURCE_ES_HOST = os.environ.get("SOURCE_ES_HOST")
-    SOURCE_ES_PORT = os.environ.get("SOURCE_ES_PORT")
+    SOURCE_ES = os.environ.get("SOURCE_ES")
 
     # Where to index documents
-    TARGET_ES_HOST = os.environ.get("TARGET_ES_HOST")
-    TARGET_ES_PORT = os.environ.get("TARGET_ES_PORT")
+    TARGET_ES= os.environ.get("TARGET_ES")
+
     DART_HOST = os.environ.get("DART_HOST")
     DART_USER = os.environ.get("DART_USER")
     DART_PASS = os.environ.get("DART_PASS")
 
     return (
         INDRA_HOST,
-        SOURCE_ES_HOST,
-        SOURCE_ES_PORT,
-        TARGET_ES_HOST,
-        TARGET_ES_PORT,
+        SOURCE_ES,
+        TARGET_ES,
         DART_HOST,
         DART_USER,
         DART_PASS
@@ -38,31 +35,25 @@ def read_environment_variables() -> Tuple[str, str, str, str, str, str, str, str
 
 @task(log_stdout=True)
 def print_inputs(
-    SOURCE_ES_HOST,
-    SOURCE_ES_PORT,
-    TARGET_ES_HOST,
-    TARGET_ES_PORT,
+    SOURCE_ES,
+    TARGET_ES,
     INDRA_HOST,
     PROJECT_EXTENSION_ID
 ):
     # 0. Print out input constants
-    print(f"Source Elastic: {SOURCE_ES_HOST}:{SOURCE_ES_PORT}")
-    print(f"Target Elastic: {TARGET_ES_HOST}:{TARGET_ES_PORT}")
+    print(f"Source Elastic: {SOURCE_ES}")
+    print(f"Target Elastic: {TARGET_ES}")
     print(f"INDRA: {INDRA_HOST}")
     print(f"PROJECT_EXTENSION_ID: {PROJECT_EXTENSION_ID}")
 
-    if (SOURCE_ES_HOST is None or
-            SOURCE_ES_PORT is None or
-            TARGET_ES_HOST is None or
-            TARGET_ES_PORT is None or
-            INDRA_HOST is None):
+    if (SOURCE_ES is None or TARGET_ES is None or INDRA_HOST is None):
         raise ValueError(
             "Missing required environment variables. Ensure that you've run `source ./.incremental_assembly_secrets.sh`.")
 
 
 @task(log_stdout=True)
-def fetch_project_extension(project_extension_id, SOURCE_ES_HOST, SOURCE_ES_PORT) -> Tuple[str, list]:
-    source_es = Elastic(SOURCE_ES_HOST, SOURCE_ES_PORT)
+def fetch_project_extension(project_extension_id, SOURCE_ES) -> Tuple[str, list]:
+    source_es = Elastic(SOURCE_ES)
     # 1. Fetch project-extension from source-es by id
     print("Fetching project-extension")
     extension = source_es.term_query(
@@ -75,9 +66,9 @@ def fetch_project_extension(project_extension_id, SOURCE_ES_HOST, SOURCE_ES_PORT
 
 
 @task(log_stdout=True)
-def process_cdrs(records, DART_HOST, DART_USER, DART_PASS, TARGET_ES_HOST, TARGET_ES_PORT):
+def process_cdrs(records, DART_HOST, DART_USER, DART_PASS, TARGET_ES):
 
-    target_es = Elastic(TARGET_ES_HOST, TARGET_ES_PORT)
+    target_es = Elastic(TARGET_ES)
     # 3. Process CDR
     doc_ids = []
     for record in records:
@@ -111,13 +102,11 @@ def request_reassembly(project_id, records, INDRA_HOST):
 def apply_reassembly_to_es(
     response,
     project_id,
-    SOURCE_ES_HOST,
-    SOURCE_ES_PORT,
-    TARGET_ES_HOST,
-    TARGET_ES_PORT
+    SOURCE_ES,
+    TARGET_ES
 ):
-    source_es = Elastic(SOURCE_ES_HOST, SOURCE_ES_PORT)
-    target_es = Elastic(TARGET_ES_HOST, TARGET_ES_PORT)
+    source_es = Elastic(SOURCE_ES)
+    target_es = Elastic(TARGET_ES)
     # 5. Parse INDRA response
     new_stmts = response["new_stmts"]
     new_evidence = response["new_evidence"]
@@ -182,40 +171,34 @@ with Flow("incremental assembly", run_config=LocalRun(labels=["non-dask"])) as f
 
     (
         INDRA_HOST,
-        SOURCE_ES_HOST,
-        SOURCE_ES_PORT,
-        TARGET_ES_HOST,
-        TARGET_ES_PORT,
+        SOURCE_ES,
+        TARGET_ES,
         DART_HOST,
         DART_USER,
         DART_PASS
     ) = read_environment_variables()
     print_inputs(
-        SOURCE_ES_HOST,
-        SOURCE_ES_PORT,
-        TARGET_ES_HOST,
-        TARGET_ES_PORT,
+        SOURCE_ES,
+        TARGET_ES,
         INDRA_HOST,
         PROJECT_EXTENSION_ID
     )
-    (project_id, records) = fetch_project_extension(
-        PROJECT_EXTENSION_ID, SOURCE_ES_HOST, SOURCE_ES_PORT)
+
+    (project_id, records) = fetch_project_extension(PROJECT_EXTENSION_ID, SOURCE_ES)
     process_cdrs(
         records,
         DART_HOST,
         DART_USER,
         DART_PASS,
-        TARGET_ES_HOST,
-        TARGET_ES_PORT
+        TARGET_ES
     )
+
     response = request_reassembly(project_id, records, INDRA_HOST)
     apply_reassembly_to_es(
         response,
         project_id,
-        SOURCE_ES_HOST,
-        SOURCE_ES_PORT,
-        TARGET_ES_HOST,
-        TARGET_ES_PORT
+        SOURCE_ES,
+        TARGET_ES
     )
     mark_completed(project_id)
 
