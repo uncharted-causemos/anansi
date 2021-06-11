@@ -7,7 +7,7 @@ es_bulk_config = {
     "max_retries": 8,
     "initial_backoff": 3,
     "max_backoff": 300,
-    "raise_on_error": False,
+    "raise_on_error": True,
     "timeout": "60s"
 }
 
@@ -24,13 +24,11 @@ def _format_for_es(index, data):
 
 # Simple Elastic wrapper, mostly for indexing and useful for looking up geo and cdr documents
 class Elastic:
-    _host = None
-    _port = None
+    _esURL = None
 
-    def __init__(self, host, port, **kwargs):
-        self._host = host
-        self.port = port
-        self.client = Elasticsearch(host, port=port, **kwargs)
+    def __init__(self, esURL, **kwargs):
+        self._esURL = esURL
+        self.client = Elasticsearch([esURL], **kwargs)
 
     def term_query(self, index, term, value, **kwargs):
         """

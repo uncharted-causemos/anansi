@@ -17,6 +17,10 @@ Despite these different cases, all knowledge ingestion will more or less follow 
 - For each statement, transfrom inject document context and geolocation context
 - Index into ElasticSearch
 
+### Main scripts
+- `src/knowledge_pipeline.py`: This is an adhoc pipeline used for dev purposes
+- `src/incremental_pipeline.py`: This is a Prefect-based pipeline for incremental-assembly
+
 
 ### Prefect Background and Commands
 
@@ -31,18 +35,31 @@ TODO: Set up a script to copy the files over and fetch any dependencies or look 
 After SSHing into `10.65.18.52`:
 
 #### To rerun the agent:
+```
+# 1. Connext to tmux session
+tmux a -t seq-agent
 
-- `tmux a -t seq-agent`
-- CTRL+C to cancel it
-- `source flows/.incremental_assembly_secrets.sh` to learn any secrets that have changed
-- `PREFECT__ENGINE__EXECUTOR__DEFAULT_CLASS="prefect.executors.LocalExecutor" PYTHONPATH="${PYTHONPATH}:/home/centos/flows" prefect agent local start --api "http://10.65.18.52:4200/graphql" --label "non-dask"` to run the non-dask agent
-- (CTRL+B D to exit the tmux session)
+# 2. Cancel sesssion CTRL+C
+
+# 3. Refresh environment
+source flows/.incremental_assembly_secrets.sh
+
+# 4. Restart agent
+PREFECT__ENGINE__EXECUTOR__DEFAULT_CLASS="prefect.executors.LocalExecutor" PYTHONPATH="${PYTHONPATH}:/home/centos/flows" prefect agent local start --api "http://10.65.18.52:4200/graphql" --label "non-dask"
+
+# 5. Detach tmux session (CTRL+B D)
+```
 
 #### To run/register the flow:
+```
+# 1. Set the "shouldRegister" flag in the python file
 
-- Set the `shouldRegister` flag in the python file
-- `conda activate prefect-seq` to switch to a python env with the correct dependencies
-- `python incremental_assembly.py` to run the file and either run the flow locally or register it with the prefect server
+# 2. Activate sequential/anansi environment
+conda activate prefect-seq
+
+# 3. Register flow
+python incremental_assembly.py
+```
 
 #### To create the agent in the first place:
 

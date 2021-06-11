@@ -26,11 +26,9 @@ See ./scripts/build_dart.sh for creating a usable DART CDR json from raw DART ou
 INDRA_HOST = "http://wm.indra.bio/"
 
 # SOURCE_ES_HOST = "http://10.64.18.99"
-SOURCE_ES_HOST = os.environ.get("SOURCE_ES_HOST")
-SOURCE_ES_PORT = os.environ.get("SOURCE_ES_PORT")
+SOURCE_ES = os.environ.get("SOURCE_ES")
 
-TARGET_ES_HOST = os.environ.get("TARGET_ES_HOST")
-TARGET_ES_PORT = os.environ.get("TARGET_ES_PORT")
+TARGET_ES = os.environ.get("TARGET_ES")
 
 DART_DATA = os.environ.get("DART_DATA")
 INDRA_DATASET = os.environ.get("INDRA_DATASET")
@@ -42,8 +40,8 @@ ONTOLOGY_URL = "https://raw.githubusercontent.com/WorldModelers/Ontologies/maste
 indra_dataset_id = "indra-" + str(uuid.uuid4());
 
 # Vars
-source_es = Elastic(SOURCE_ES_HOST, SOURCE_ES_PORT)
-target_es = Elastic(TARGET_ES_HOST, TARGET_ES_PORT)
+source_es = Elastic(SOURCE_ES)
+target_es = Elastic(TARGET_ES)
 
 def JSONL_ETL_wrapper(filename, transform_fn, index_name):
     counter = 0
@@ -67,8 +65,8 @@ def JSONL_ETL_wrapper(filename, transform_fn, index_name):
 
 # 1. Print out info
 logger.info(f"Creating new INDRA dataset: {indra_dataset_id}")
-logger.info(f"Source Elastic: {SOURCE_ES_HOST}:{SOURCE_ES_PORT}")
-logger.info(f"Target Elastic: {TARGET_ES_HOST}:{TARGET_ES_PORT}")
+logger.info(f"Source Elastic: {SOURCE_ES}")
+logger.info(f"Target Elastic: {TARGET_ES}")
 logger.info(f"INDRA: {INDRA_DATASET}")
 logger.info(f"DART: {DART_DATA}")
 
