@@ -185,7 +185,7 @@ with Flow("incremental assembly", run_config=LocalRun(labels=["non-dask"])) as f
     )
 
     (project_id, records) = fetch_project_extension(PROJECT_EXTENSION_ID, SOURCE_ES)
-    process_cdrs(
+    process_cdrs_completed = process_cdrs(
         records,
         DART_HOST,
         DART_USER,
@@ -198,7 +198,8 @@ with Flow("incremental assembly", run_config=LocalRun(labels=["non-dask"])) as f
         response,
         project_id,
         SOURCE_ES,
-        TARGET_ES
+        TARGET_ES,
+        upstream_tasks=[process_cdrs_completed]
     )
     mark_completed(project_id)
 
@@ -213,7 +214,7 @@ should_register = True
 if (should_register):
     flow.register(project_name="project")
 else:
-    PROJECT_EXTENSION_ID = os.environ.get("PROJECT_EXTENSION_ID")  # "http://wm.indra.bio/"
+    PROJECT_EXTENSION_ID = os.environ.get("PROJECT_EXTENSION_ID")
     if PROJECT_EXTENSION_ID is None:
         raise ValueError("Missing required environment variable PROJECT_EXTENSION_ID")
 
