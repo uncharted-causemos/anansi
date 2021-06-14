@@ -92,10 +92,18 @@ class Elastic:
         )
         return response
 
+    def clone(self, source_index, target_index):
+        """
+        Clone indices
+        """
+        response = self.client.indices.clone(source_index, target_index)
+        return response
+
     def set_readonly(self, index, v):
         body = {
             "index": {
-                "blocks.read_only": v
+                "blocks.read_only": v,
+                "blocks.write": v
             }
         }
         response = self.client.indices.put_settings(body, index)

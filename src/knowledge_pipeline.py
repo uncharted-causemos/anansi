@@ -84,7 +84,8 @@ def indra_transform(obj):
 
 mapping_content = json_file_content("./src/indra/indra_mapping.json")
 try:
-    target_es.create_index(indra_dataset_id, mapping_content)
+    target_es.clone("indra", indra_dataset_id)
+    target_es.set_readonly(indra_dataset_id, False)
     logger.info(f"Created index {indra_dataset_id}")
 except Exception as e:
     logger.error(f"Failed to create index {indra_dataset_id}")
