@@ -366,10 +366,20 @@
                             "type": "object",
                             "properties": {
                                 "loc": {
-                                    "type": "keyword"
+                                    "type": "text",
+                                    "fields": {
+                                      "raw": {
+                                        "type": "keyword"
+                                      }
+                                    }
                                 },
                                 "org": {
-                                    "type": "keyword"
+                                    "type": "text",
+                                    "fields": {
+                                      "raw": {
+                                        "type": "keyword"
+                                      }
+                                    }
                                 }
                             }
                         },
