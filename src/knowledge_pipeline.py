@@ -7,6 +7,7 @@ from elastic import Elastic
 from indra import influence_transform, metadata_transfrom, IndraAPI
 from dart import document_transform
 from utils import json_file_content
+import time
 
 FORMAT = "%(asctime)-25s %(levelname)-8s %(message)s"
 logging.basicConfig(format=FORMAT)
@@ -73,6 +74,8 @@ logger.info(f"DART: {DART_DATA}")
 # 2. Load CDRs
 logger.info("Indexing CDRs")
 JSONL_ETL_wrapper(DART_DATA, document_transform, "corpus")
+target_es.refresh("corpus")
+time.sleep(3)
 
 
 # 3. Load INDRA statements

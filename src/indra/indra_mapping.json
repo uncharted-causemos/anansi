@@ -63,7 +63,12 @@
                     "type": "boolean"
                 },
                 "topic": {
-                    "type": "text"
+                    "type": "text",
+                    "fields": {
+                      "raw": {
+                        "type": "keyword"
+                      }
+                    }
                 },
                 "min_grounding_score": {
                     "type": "float"
@@ -334,7 +339,12 @@
                             "type": "keyword"
                         },
                         "author": {
-                            "type": "text"
+                            "type": "text",
+                            "fields": {
+                              "raw": {
+                                "type": "keyword"
+                              }
+                            }
                         },
                         "document_source": {
                             "type": "keyword"
