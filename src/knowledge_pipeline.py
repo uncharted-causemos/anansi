@@ -75,17 +75,16 @@ logger.info(f"DART: {DART_DATA}")
 logger.info("Indexing CDRs")
 JSONL_ETL_wrapper(DART_DATA, document_transform, "corpus")
 target_es.refresh("corpus")
-time.sleep(3)
 
 
 # 3. Load INDRA statements
 def indra_transform(obj):
     return influence_transform(obj, source_es)
 
-mapping_content = json_file_content("./src/indra/indra_mapping.json")
 try:
     target_es.clone("indra", indra_dataset_id)
     target_es.set_readonly(indra_dataset_id, False)
+    target_es.refresh(indra_dataset_id)
     logger.info(f"Created index {indra_dataset_id}")
 except Exception as e:
     logger.error(f"Failed to create index {indra_dataset_id}")

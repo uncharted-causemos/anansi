@@ -96,7 +96,19 @@ class Elastic:
         """
         Clone indices
         """
-        response = self.client.indices.clone(source_index, target_index)
+
+        response = self.client.indices.get(index=source_index, flat_settings=True)
+        source_settings = response.get("settings", {})
+
+        settings = {
+            "index.number_of_shards": source_settings.get("index.number_of_shards", 1),
+            "index.number_of_replicas": source_settings.get("index.number_of_replicas", 0),
+            "index.analysis": source_settings.get("analysis", {})
+        }
+
+        response = self.client.indices.clone(source_index, target_index, body = {
+            "settings": settings
+        })
         return response
 
     def set_readonly(self, index, v):
