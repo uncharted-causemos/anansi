@@ -103,7 +103,9 @@ class Elastic:
         settings = {
             "index.number_of_shards": source_settings.get("index.number_of_shards", 1),
             "index.number_of_replicas": source_settings.get("index.number_of_replicas", 0),
-            "index.analysis": source_settings.get("analysis", {})
+            "index.analysis": source_settings.get("analysis", {}),
+            "index.blocks.read_only": False,
+            "index.blocks.write": False
         }
 
         response = self.client.indices.clone(source_index, target_index, body = {

@@ -84,8 +84,8 @@ logger.info("Cloning 'indra' index")
 try:
     target_es.clone("indra", indra_dataset_id)
     target_es.refresh(indra_dataset_id)
-    target_es.set_readonly(indra_dataset_id, False)
-    target_es.refresh(indra_dataset_id)
+    # target_es.set_readonly(indra_dataset_id, False)
+    # target_es.refresh(indra_dataset_id)
     logger.info(f"Created index {indra_dataset_id}")
 except Exception as e:
     logger.error(f"Failed to create index {indra_dataset_id}")
