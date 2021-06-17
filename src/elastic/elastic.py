@@ -108,7 +108,7 @@ class Elastic:
 
         response = self.client.indices.clone(source_index, target_index, body = {
             "settings": settings
-        })
+        }, wait_for_active_shards = 1)
         return response
 
     def set_readonly(self, index, v):
