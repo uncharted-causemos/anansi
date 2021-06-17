@@ -93,6 +93,10 @@ except Exception as e:
 logger.info("Indexing INDRA statements")
 JSONL_ETL_wrapper(INDRA_STATEMENTS, indra_transform, indra_dataset_id)
 
+logger.info(f"Done");
+index_data = target_es.cat_index(indra_dataset_id)
+logger.info(f"\t{index_data}");
+
 target_es.set_readonly(indra_dataset_id, True)
 
 

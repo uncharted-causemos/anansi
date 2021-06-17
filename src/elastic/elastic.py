@@ -1,4 +1,5 @@
 from elasticsearch import Elasticsearch
+from elasticsearch.client import CatClient
 from elasticsearch.helpers import bulk
 
 es_bulk_config = {
@@ -73,6 +74,11 @@ class Elastic:
 
     def list_indices(self):
         response = self.client.indices.get("*")
+        return response
+
+    def cat_index(self, index):
+        cat_client = CatClient(self.client)
+        response = cat_client.indices(index)
         return response
 
     def create_index(self, index, mappings={}):
