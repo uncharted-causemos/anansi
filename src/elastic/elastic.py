@@ -1,4 +1,5 @@
 from elasticsearch import Elasticsearch
+from elasticsearch.client import CatClient
 from elasticsearch.helpers import bulk
 
 es_bulk_config = {
@@ -75,6 +76,11 @@ class Elastic:
         response = self.client.indices.get("*")
         return response
 
+    def cat_index(self, index):
+        cat_client = CatClient(self.client)
+        response = cat_client.indices(index)
+        return response
+
     def create_index(self, index, mappings={}):
         """
         Create an index in ES w/ or w/o a body
@@ -92,10 +98,32 @@ class Elastic:
         )
         return response
 
+    def clone(self, source_index, target_index):
+        """
+        Clone indices
+        """
+
+        response = self.client.indices.get(index=source_index, flat_settings=True)
+        source_settings = response.get("settings", {})
+
+        settings = {
+            "index.number_of_shards": source_settings.get("index.number_of_shards", 1),
+            "index.number_of_replicas": source_settings.get("index.number_of_replicas", 0),
+            "index.analysis": source_settings.get("analysis", {}),
+            "index.blocks.read_only": False,
+            "index.blocks.write": False
+        }
+
+        response = self.client.indices.clone(source_index, target_index, body = {
+            "settings": settings
+        }, wait_for_active_shards = 1)
+        return response
+
     def set_readonly(self, index, v):
         body = {
             "index": {
-                "blocks.read_only": v
+                "blocks.read_only": v,
+                "blocks.write": v
             }
         }
         response = self.client.indices.put_settings(body, index)
