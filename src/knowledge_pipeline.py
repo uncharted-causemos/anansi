@@ -7,7 +7,6 @@ from elastic import Elastic
 from indra import influence_transform, metadata_transfrom, IndraAPI
 from dart import document_transform
 from utils import json_file_content
-import time
 
 FORMAT = "%(asctime)-25s %(levelname)-8s %(message)s"
 logging.basicConfig(format=FORMAT)
