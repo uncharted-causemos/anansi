@@ -75,8 +75,8 @@ epoch = epoch_millis()
 def cdr_transform_wrapper(obj):
     doc = document_transform(obj)
     doc["origin"] = {
-        "assembly_request_id": "init"
-        "modified_at": epoch_millis
+        "assembly_request_id": "init",
+        "modified_at": epoch
     }
     return doc
 
