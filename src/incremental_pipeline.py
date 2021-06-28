@@ -6,6 +6,7 @@ from indra import influence_transform, metadata_transfrom, evidence_transform, g
 import os
 from elastic import Elastic
 from dart import document_transform, get_CDRs
+from util import epoch_millis
 
 
 @task(log_stdout=True)
@@ -38,13 +39,13 @@ def print_inputs(
     SOURCE_ES,
     TARGET_ES,
     INDRA_HOST,
-    PROJECT_EXTENSION_ID
+    ASSEMBLY_REQUEST_ID
 ):
     # 0. Print out input constants
     print(f"Source Elastic: {SOURCE_ES}")
     print(f"Target Elastic: {TARGET_ES}")
     print(f"INDRA: {INDRA_HOST}")
-    print(f"PROJECT_EXTENSION_ID: {PROJECT_EXTENSION_ID}")
+    print(f"ASSEMBLY_REQUEST_ID: {ASSEMBLY_REQUEST_ID}")
 
     if (SOURCE_ES is None or TARGET_ES is None or INDRA_HOST is None):
         raise ValueError(
@@ -52,21 +53,20 @@ def print_inputs(
 
 
 @task(log_stdout=True)
-def fetch_project_extension(project_extension_id, SOURCE_ES) -> Tuple[str, list]:
+def fetch_assembly_request(assembly_request_id, SOURCE_ES) -> Tuple[str, list]:
     source_es = Elastic(SOURCE_ES)
     # 1. Fetch project-extension from source-es by id
-    print("Fetching project-extension")
-    extension = source_es.term_query(
-        "project-extension", "id", project_extension_id)
+    print("Fetching assembly-request")
+    extension = source_es.term_query("assembly-request", "id", assembly_request_id)
     project_id = extension["project_id"]
     records = extension["records"]
     print(
-        f"Found extension with {len(records)} records for project: {project_extension_id}")
+        f"Found extension with {len(records)} records for project: {assembly_request_id}")
     return (project_id, records)
 
 
 @task(log_stdout=True)
-def process_cdrs(records, DART_HOST, DART_USER, DART_PASS, TARGET_ES):
+def process_cdrs(ASSEMBLY_REQUEST_ID, records, DART_HOST, DART_USER, DART_PASS, TARGET_ES):
 
     target_es = Elastic(TARGET_ES)
     # 3. Process CDR
@@ -75,11 +75,20 @@ def process_cdrs(records, DART_HOST, DART_USER, DART_PASS, TARGET_ES):
         doc_ids.append(record["document_id"])
     doc_ids = list(set(doc_ids))
 
+    epoch = epoch_millis()
+    def cdr_transform_wrapper(obj):
+        doc = document_transform(obj)
+        doc["extension"] = {
+            "assembly_request_id": ASSEMBLY_REQUEST_ID,
+            "modified_at": epoch
+        }
+        return doc
+
     cdrs = get_CDRs(DART_HOST, DART_USER, DART_PASS, doc_ids)
     counter = 0
     es_buffer = []
     for cdr in cdrs:
-        es_buffer.append(document_transform(cdr))
+        es_buffer.append(cdr_transform_wrapper(cdr))
         counter = counter + 1
         if counter % 500 == 0:
             print(f"\tIndexing ... {counter}")
@@ -164,10 +173,10 @@ def mark_completed(project_id):
 
 
 with Flow("incremental assembly", run_config=LocalRun(labels=["non-dask"])) as flow:
-    PROJECT_EXTENSION_ID = Parameter("PROJECT_EXTENSION_ID")
+    ASSEMBLY_REQUEST_ID = Parameter("ASSEMBLY_REQUEST_ID")
 
-    if PROJECT_EXTENSION_ID is None:
-        raise ValueError("Missing parameter PROJECT_EXTENSION_ID")
+    if ASSEMBLY_REQUEST_ID is None:
+        raise ValueError("Missing parameter ASSEMBLY_REQUEST_ID")
 
     (
         INDRA_HOST,
@@ -181,11 +190,12 @@ with Flow("incremental assembly", run_config=LocalRun(labels=["non-dask"])) as f
         SOURCE_ES,
         TARGET_ES,
         INDRA_HOST,
-        PROJECT_EXTENSION_ID
+        ASSEMBLY_REQUEST_ID
     )
 
-    (project_id, records) = fetch_project_extension(PROJECT_EXTENSION_ID, SOURCE_ES)
+    (project_id, records) = fetch_assembly_request(ASSEMBLY_REQUEST_ID, SOURCE_ES)
     process_cdrs_completed = process_cdrs(
+        ASSEMBLY_REQUEST_ID,
         records,
         DART_HOST,
         DART_USER,
@@ -214,14 +224,14 @@ should_register = True
 if (should_register):
     flow.register(project_name="project")
 else:
-    PROJECT_EXTENSION_ID = os.environ.get("PROJECT_EXTENSION_ID")
-    if PROJECT_EXTENSION_ID is None:
-        raise ValueError("Missing required environment variable PROJECT_EXTENSION_ID")
+    ASSEMBLY_REQUEST_ID = os.environ.get("ASSEMBLY_REQUEST_ID")
+    if ASSEMBLY_REQUEST_ID is None:
+        raise ValueError("Missing required environment variable ASSEMBLY_REQUEST_ID")
 
     state = flow.run(
         executor=LocalExecutor(),
         parameters={
-            "PROJECT_EXTENSION_ID": PROJECT_EXTENSION_ID
+            "ASSEMBLY_REQUEST_ID": ASSEMBLY_REQUEST_ID
         }
     )
 

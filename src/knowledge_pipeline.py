@@ -6,7 +6,7 @@ from smart_open import open
 from elastic import Elastic
 from indra import influence_transform, metadata_transfrom, IndraAPI
 from dart import document_transform
-from utils import json_file_content
+from utils import json_file_content, epoch_millis
 
 FORMAT = "%(asctime)-25s %(levelname)-8s %(message)s"
 logging.basicConfig(format=FORMAT)
@@ -71,8 +71,17 @@ logger.info(f"INDRA: {INDRA_DATASET}")
 logger.info(f"DART: {DART_DATA}")
 
 # 2. Load CDRs
+epoch = epoch_millis()
+def cdr_transform_wrapper(obj):
+    doc = document_transform(obj)
+    doc["extension"] = {
+        "assembly_request_id": "init"
+        "modified_at": epoch_millis
+    }
+    return doc
+
 logger.info("Indexing CDRs")
-JSONL_ETL_wrapper(DART_DATA, document_transform, "corpus")
+JSONL_ETL_wrapper(DART_DATA, cdr_transform_wrapper, "corpus")
 target_es.refresh("corpus")
 
 

@@ -163,6 +163,10 @@ def evidence_transform(ev, es):
             document_context["ner_analytics"] = cdr["ner_analytics"]
             document_context["analysis"] = cdr["analysis"]
 
+            # BYOD tagging
+            if "extension" in cdr["extension"]:
+                document_context["extension"] = cdr["extension"]
+
             document_context["publication_date"] = {}
             if "publication_date" in cdr and cdr["publication_date"] is not None:
                 document_context["publication_date"]["date"] = int(cdr["publication_date"]["date"])
