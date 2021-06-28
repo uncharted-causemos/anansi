@@ -6,7 +6,7 @@ from indra import influence_transform, metadata_transfrom, evidence_transform, g
 import os
 from elastic import Elastic
 from dart import document_transform, get_CDRs
-from util import epoch_millis
+from utils import epoch_millis
 
 
 @task(log_stdout=True)
@@ -78,7 +78,7 @@ def process_cdrs(ASSEMBLY_REQUEST_ID, records, DART_HOST, DART_USER, DART_PASS, 
     epoch = epoch_millis()
     def cdr_transform_wrapper(obj):
         doc = document_transform(obj)
-        doc["extension"] = {
+        doc["origin"] = {
             "assembly_request_id": ASSEMBLY_REQUEST_ID,
             "modified_at": epoch
         }
@@ -218,7 +218,7 @@ with Flow("incremental assembly", run_config=LocalRun(labels=["non-dask"])) as f
 # Set this to False to run the flow locally, or
 # set it to True to register the flow with the Prefect server
 # to be run later on an agent.
-should_register = True
+should_register = False
 
 
 if (should_register):

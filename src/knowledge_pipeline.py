@@ -74,7 +74,7 @@ logger.info(f"DART: {DART_DATA}")
 epoch = epoch_millis()
 def cdr_transform_wrapper(obj):
     doc = document_transform(obj)
-    doc["extension"] = {
+    doc["origin"] = {
         "assembly_request_id": "init"
         "modified_at": epoch_millis
     }

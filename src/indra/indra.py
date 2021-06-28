@@ -164,8 +164,8 @@ def evidence_transform(ev, es):
             document_context["analysis"] = cdr["analysis"]
 
             # BYOD tagging
-            if "extension" in cdr["extension"]:
-                document_context["extension"] = cdr["extension"]
+            if "origin" in cdr["origin"]:
+                document_context["origin"] = cdr["origin"]
 
             document_context["publication_date"] = {}
             if "publication_date" in cdr and cdr["publication_date"] is not None:
