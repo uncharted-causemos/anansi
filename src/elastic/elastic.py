@@ -17,11 +17,18 @@ def _format_for_es(index, data):
         data = [data]
 
     for datum in data:
-        yield {
-            "_source": datum,
-            "_index": index,
-            "_id": datum["id"]
-        }
+        try:
+            yield {
+                "_source": datum,
+                "_index": index,
+                "_id": datum["id"]
+            }
+        except:
+            yield {
+                "_source": datum,
+                "_index": index,
+                "_id": datum["geo_id"]
+            }
 
 # Simple Elastic wrapper, mostly for indexing and useful for looking up geo and cdr documents
 class Elastic:
