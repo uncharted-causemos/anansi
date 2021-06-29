@@ -4,6 +4,19 @@ import numpy as np
 from elastic import Elastic
 
 
+'''
+This script is meant to update the geo index.
+The data comes from the following URLs:
+http://download.geonames.org/export/dump/allCountries.zip
+http://clulab.cs.arizona.edu/models/gadm_woredas.txt
+
+Those files are needed locally in the root folder
+
+It keeps the geo_id, name, lat and lon columns, as well as filter out rows where the
+feature column contains U, T, R, L, H, S, V.
+'''
+
+
 def filter_rows_and_columns(df, columns):
     return df[~df['feature'].isin(["U", "T", "R", "L", "H", "S", "V"])][columns]
 
