@@ -35,7 +35,7 @@ INDRA_DATASET = os.environ.get("INDRA_DATASET")
 INDRA_STATEMENTS = INDRA_DATASET + "/statements.json"
 INDRA_METADATA = INDRA_DATASET + "/metadata.json"
 
-ONTOLOGY_URL = "https://raw.githubusercontent.com/WorldModelers/Ontologies/master/CompositionalOntology_v2.1_metadata.yml"
+ONTOLOGY_URL = "https://raw.githubusercontent.com/WorldModelers/Ontologies/master/CompositionalOntology_metadata.yml"
 
 indra_dataset_id = "indra-" + str(uuid.uuid4());
 
