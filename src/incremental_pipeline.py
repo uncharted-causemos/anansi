@@ -80,6 +80,7 @@ def process_cdrs(ASSEMBLY_REQUEST_ID, records, DART_HOST, DART_USER, DART_PASS, 
         doc = document_transform(obj)
         doc["origin"] = {
             "assembly_request_id": ASSEMBLY_REQUEST_ID,
+            "byod_tag": "Analyst uploads",
             "modified_at": epoch
         }
         return doc

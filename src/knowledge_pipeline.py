@@ -76,6 +76,7 @@ def cdr_transform_wrapper(obj):
     doc = document_transform(obj)
     doc["origin"] = {
         "assembly_request_id": "init",
+        "byod_tag": "Default",
         "modified_at": epoch
     }
     return doc
