@@ -30,7 +30,8 @@ def document_transform(doc):
         "extracted_text":   doc.get("extracted_text", ""),
         "collection_type":  doc.get("collection_type", ""),
         "ner_analytics": ner,
-        "analysis": analysis
+        "analysis": analysis,
+        "label": doc.get("labels", [])
     }
 
 
