@@ -2,7 +2,8 @@
 Anansi is the WM knowledge data ingestion pipelines. It provides a suite of tools for dealing with and transforming INDRA statement and DART CDRs.
 
 ### Prereq
-We assume the geolocation reference dataset is in place and ready to be used. To install the geolocation data please see TODO
+In all steps we assume the geolocation reference dataset is in place and ready to be used as it doesn't change very often and doesn't need to be updated every data load. 
+To install the geolocation data please see `src/geo_loader.py`
 
 ### Usage scenarios
 There are three separate scenarios where we would need to ingest knowledge
@@ -20,6 +21,32 @@ Despite these different cases, all knowledge ingestion will more or less follow 
 ### Main scripts
 - `src/knowledge_pipeline.py`: This is an adhoc pipeline used for dev purposes
 - `src/incremental_pipeline.py`: This is a Prefect-based pipeline for incremental-assembly
+
+
+### Loading new INDRA data
+This section describes the steps to load INDRA dataset. Assumes geo index is ready and populated.
+- Ensure you have the right environement and dependencies, e.g. virutualenv
+- Download the DART document archive. This will create a `dart_cdr.json` JSON-L file. Note you will need DART user/pass credentials, they are the same as the ones found here: https://gitlab.uncharted.software/WM/wm-env/-/blob/main/dev/causemos.env
+
+```
+./scripts/build_dart.sh
+```
+
+- Download the correct INDRA dataset, each dataset should have two files: a statements file anda  metadatafile. Note you will need the correct AWS credentials in ~/.aws/credentials, ask your team lead.
+
+```
+python scripts/download_indra_s3.py
+```
+
+- Run the following command upated with the paths from above.
+
+```
+SOURCE_ES="<ES_URL>" \
+TARGET_ES="<ES_URL>" \
+DART_DATA="<PATH_TO_dart_cdr.json>" \
+INDRA_DATASET="<PATH_TO_INDRA_DIRECTORY>" \
+python src/knowledge_pipeline.py
+```
 
 
 ### Prefect Background and Commands
