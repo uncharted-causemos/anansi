@@ -41,7 +41,7 @@ indra_dataset_id = "indra-" + str(uuid.uuid4());
 
 # Vars
 source_es = Elastic(SOURCE_ES)
-target_es = Elastic(TARGET_ES)
+target_es = Elastic(TARGET_ES, timeout=300)
 
 def JSONL_ETL_wrapper(filename, transform_fn, index_name):
     counter = 0
