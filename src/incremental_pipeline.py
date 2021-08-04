@@ -123,8 +123,6 @@ def apply_reassembly_to_es(
     target_es = Elastic(TARGET_ES)
     # 5. Parse INDRA response
     new_stmts = response["new_stmts"]
-    # print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-    # print(new_stmts)
     new_evidence = response["new_evidence"]
     new_refinements = response["new_refinements"]
     beliefs = response["beliefs"]
