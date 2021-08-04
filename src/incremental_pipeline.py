@@ -50,7 +50,6 @@ def print_inputs(
     print(f"Target Elastic: {TARGET_ES}")
     print(f"INDRA: {INDRA_HOST}")
     print(f"ASSEMBLY_REQUEST_ID: {ASSEMBLY_REQUEST_ID}")
-    print(ASSEMBLY_REQUEST_ID)
 
     if (SOURCE_ES is None or TARGET_ES is None or INDRA_HOST is None):
         raise ValueError(
@@ -124,6 +123,8 @@ def apply_reassembly_to_es(
     target_es = Elastic(TARGET_ES)
     # 5. Parse INDRA response
     new_stmts = response["new_stmts"]
+    # print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    # print(new_stmts)
     new_evidence = response["new_evidence"]
     new_refinements = response["new_refinements"]
     beliefs = response["beliefs"]
@@ -137,7 +138,9 @@ def apply_reassembly_to_es(
     #   transform and index new statements to project index
     counter = 0
     es_buffer = []
+    statement_ids = []
     for statement in new_stmts.values():
+        statement_ids.append(statement["id"])
         matches_hash = str(statement["matches_hash"])
         statement["evidence"] = new_evidence.get(matches_hash)
         statement["belief"] = beliefs.get(matches_hash)
@@ -172,14 +175,16 @@ def apply_reassembly_to_es(
         print(f"\tIndexing ... {len(update_buffer)}")
         target_es.bulk_write(project_id, update_buffer)
 
+    return statement_ids
+
 @task(log_stdout=True)
-def update_curations(host, SOURCE_ES, project_id):
+def update_curations(host, SOURCE_ES, project_id, statement_ids):
     source_es = Elastic(SOURCE_ES)
     # need to get kb_id from the project index
     project = source_es.term_query("project", "id", project_id)
     kb_id = project["kb_id"]
     curation = CurationRecommendationAPI(host)
-    curation.ingest(kb_id)
+    curation.ingest(kb_id, statement_ids)
     print("Updated curation recommendation to ingest new kb")
 
 @task(log_stdout=True)
@@ -220,14 +225,14 @@ with Flow("incremental assembly", run_config=LocalRun(labels=["non-dask"])) as f
     )
 
     response = request_reassembly(project_id, records, INDRA_HOST)
-    apply_reassembly_to_es(
+    statement_ids = apply_reassembly_to_es(
         response,
         project_id,
         SOURCE_ES,
         TARGET_ES,
         upstream_tasks=[process_cdrs_completed]
     )
-    update_curations(CURATION_HOST, SOURCE_ES, project_id)
+    update_curations(CURATION_HOST, SOURCE_ES, project_id, statement_ids)
     mark_completed(project_id)
 
 # ===========================================================
