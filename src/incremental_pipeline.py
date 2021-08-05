@@ -181,7 +181,7 @@ def update_curations(host, SOURCE_ES, project_id, statement_ids):
     # need to get kb_id from the project index
     project = source_es.term_query("project", "id", project_id)
     kb_id = project["kb_id"]
-    curation = CurationRecommendationAPI(host)
+    curation = CurationRecommendationAPI(host, SOURCE_ES)
     curation.ingest(kb_id, statement_ids)
     print("Updated curation recommendation to ingest new kb")
 
