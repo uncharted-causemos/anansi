@@ -182,8 +182,10 @@ def update_curations(host, SOURCE_ES, project_id, statement_ids):
     project = source_es.term_query("project", "id", project_id)
     kb_id = project["kb_id"]
     curation = CurationRecommendationAPI(host, SOURCE_ES)
-    print(statement_ids)
-    response = curation.ingest(kb_id, statement_ids)
+    response = curation.ingest(kb_id)
+    task_id = response["task_id"]
+    print(f"Curation ingest task id: {task_id}")
+    response = curation.delta_ingest(kb_id, statement_ids)
     task_id = response["task_id"]
     print(f"Curation delta ingest task id: {task_id}")
     print("Updated curation recommendation to ingest new kb")
