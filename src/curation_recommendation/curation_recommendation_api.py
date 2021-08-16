@@ -8,15 +8,6 @@ class CurationRecommendationAPI:
         self._host = host
         self._es_url = ES_url
 
-    def ingest(self, kb_id):
-        r = requests.post(self._host + "/recommendation/ingest/" + kb_id, json={
-            "es_host": ":".join(self._es_url.split(':')[:-1]),
-            "es_port": self._es_url.split(":")[-1],
-            "remove_factors": True,
-            "remove_statements": True
-        }, timeout=1200)
-        return r.json()
-
     def delta_ingest(self, kb_id, statement_ids):
         r = requests.post(self._host + "/recommendation/delta-ingest/" + kb_id, json={
             "es_host": ":".join(self._es_url.split(':')[:-1]),
