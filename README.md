@@ -55,7 +55,7 @@ The `incremental_pipeline.py` file is decorated and structured to be runnable th
 
 There is a [Prefect agent](https://docs.prefect.io/orchestration/agents/overview.html) running on that machine, labelled with `non-dask`. Flows with the same tag will be run by this agent instead of a Dask agent that will attempt to run some tasks in parallel.
 
-Code changes currently need to be manually copied over, including local dependencies like `dart`, `elastic`, etc. GitLab is run on `10.64` and therefore we can't `git clone` from it on the `10.65` machine.
+Code changes currently need to be manually copied over, including local dependencies like `dart`, `elastic`, etc. GitLab is run on `10.64.x.x` network and therefore we can't `git clone` from it on `10.65.x.x` machines.
 
 TODO: Set up a script to copy the files over and fetch any dependencies or look into automating this from GitLab directly when code is merged in.
 
