@@ -3,6 +3,7 @@ from prefect.run_configs import LocalRun
 from prefect.executors import LocalExecutor
 from typing import Tuple
 from indra import influence_transform, metadata_transfrom, evidence_transform, get_wm, IndraAPI
+from curation_recommendation import CurationRecommendationAPI
 import os
 from elastic import Elastic
 from dart import document_transform, get_CDRs
@@ -10,7 +11,7 @@ from utils import epoch_millis
 
 
 @task(log_stdout=True)
-def read_environment_variables() -> Tuple[str, str, str, str, str, str]:
+def read_environment_variables() -> Tuple[str, str, str, str, str, str, str]:
     # Environment
     INDRA_HOST = os.environ.get("INDRA_HOST")  # "http://wm.indra.bio/"
 
@@ -24,13 +25,16 @@ def read_environment_variables() -> Tuple[str, str, str, str, str, str]:
     DART_USER = os.environ.get("DART_USER")
     DART_PASS = os.environ.get("DART_PASS")
 
+    CURATION_HOST = os.environ.get("CURATION_HOST")
+
     return (
         INDRA_HOST,
         SOURCE_ES,
         TARGET_ES,
         DART_HOST,
         DART_USER,
-        DART_PASS
+        DART_PASS,
+        CURATION_HOST
     )
 
 
@@ -55,11 +59,11 @@ def print_inputs(
 @task(log_stdout=True)
 def fetch_assembly_request(assembly_request_id, SOURCE_ES) -> Tuple[str, list]:
     source_es = Elastic(SOURCE_ES)
-    # 1. Fetch project-extension from source-es by id
+    # 1. Fetch assembly-request from source-es by id
     print("Fetching assembly-request")
-    extension = source_es.term_query("assembly-request", "id", assembly_request_id)
-    project_id = extension["project_id"]
-    records = extension["records"]
+    assembly_request = source_es.term_query("assembly-request", "id", assembly_request_id)
+    project_id = assembly_request["project_id"]
+    records = assembly_request["records"]
     print(
         f"Found extension with {len(records)} records for project: {assembly_request_id}")
     return (project_id, records)
@@ -132,7 +136,9 @@ def apply_reassembly_to_es(
     #   transform and index new statements to project index
     counter = 0
     es_buffer = []
+    statement_ids = []
     for statement in new_stmts.values():
+        statement_ids.append(statement["id"])
         matches_hash = str(statement["matches_hash"])
         statement["evidence"] = new_evidence.get(matches_hash)
         statement["belief"] = beliefs.get(matches_hash)
@@ -167,6 +173,19 @@ def apply_reassembly_to_es(
         print(f"\tIndexing ... {len(update_buffer)}")
         target_es.bulk_write(project_id, update_buffer)
 
+    return statement_ids
+
+@task(log_stdout=True)
+def update_curations(host, SOURCE_ES, project_id, statement_ids):
+    source_es = Elastic(SOURCE_ES)
+    # need to get kb_id from the project index
+    project = source_es.term_query("project", "id", project_id)
+    kb_id = project["kb_id"]
+    curation = CurationRecommendationAPI(host, SOURCE_ES)
+    response = curation.delta_ingest(kb_id, statement_ids, project_id)
+    task_id = response["task_id"]
+    print(f"Curation delta ingest task id: {task_id}")
+    print("Updated curation recommendation to ingest new kb")
 
 @task(log_stdout=True)
 def mark_completed(project_id):
@@ -185,7 +204,8 @@ with Flow("incremental assembly", run_config=LocalRun(labels=["non-dask"])) as f
         TARGET_ES,
         DART_HOST,
         DART_USER,
-        DART_PASS
+        DART_PASS,
+        CURATION_HOST
     ) = read_environment_variables()
     print_inputs(
         SOURCE_ES,
@@ -205,13 +225,14 @@ with Flow("incremental assembly", run_config=LocalRun(labels=["non-dask"])) as f
     )
 
     response = request_reassembly(project_id, records, INDRA_HOST)
-    apply_reassembly_to_es(
+    statement_ids = apply_reassembly_to_es(
         response,
         project_id,
         SOURCE_ES,
         TARGET_ES,
         upstream_tasks=[process_cdrs_completed]
     )
+    update_curations(CURATION_HOST, SOURCE_ES, project_id, statement_ids)
     mark_completed(project_id)
 
 # ===========================================================
