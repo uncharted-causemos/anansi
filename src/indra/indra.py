@@ -227,7 +227,7 @@ def get_event(statement, t, es):
     top = candidates[0]
 
     return {
-        "factor": event["concept"]["name"],
+        "factor": event["concept"]["db_refs"]["TEXT"],
         "polarity": event["delta"]["polarity"],
         "time_context": time_context,
         "adjectives": adjectives,
