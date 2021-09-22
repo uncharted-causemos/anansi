@@ -43,7 +43,7 @@ indra_dataset_id = "indra-" + str(uuid.uuid4());
 source_es = Elastic(SOURCE_ES)
 target_es = Elastic(TARGET_ES, timeout=300)
 
-def JSONL_ETL_wrapper(filename, transform_fn, index_name):
+def JSONL_ETL_wrapper(filename, transform_fn, index_name, key = "id"):
     counter = 0
     es_buffer = []
     with open(filename, 'r') as F:
@@ -54,12 +54,12 @@ def JSONL_ETL_wrapper(filename, transform_fn, index_name):
             es_buffer.append(doc)
             if counter % 500 == 0:
                 logger.info(f"\tIndexing ... {counter}")
-                target_es.bulk_write(index_name, es_buffer)
+                target_es.bulk_write(index_name, es_buffer, key)
                 es_buffer = []
 
     if len(es_buffer) > 0:
         logger.info(f"\tIndexing ... {counter}")
-        target_es.bulk_write(index_name, es_buffer)
+        target_es.bulk_write(index_name, es_buffer, key)
         es_buffer = []
 
 
@@ -101,7 +101,7 @@ except Exception as e:
     logger.error(f"Failed to create index {indra_dataset_id}")
 
 logger.info("Indexing INDRA statements")
-JSONL_ETL_wrapper(INDRA_STATEMENTS, indra_transform, indra_dataset_id)
+JSONL_ETL_wrapper(INDRA_STATEMENTS, indra_transform, indra_dataset_id, "matches_hash")
 
 logger.info(f"Done");
 index_data = target_es.cat_index(indra_dataset_id)
