@@ -147,11 +147,11 @@ def apply_reassembly_to_es(
         es_buffer.append(result)
         if counter % 500 == 0:
             print(f"\tIndexing ... {counter}")
-            target_es.bulk_write(project_id, es_buffer)
+            target_es.bulk_write(project_id, es_buffer, "matches_hash")
             es_buffer = []
     if len(es_buffer) > 0:
         print(f"\tIndexing ... {counter}")
-        target_es.bulk_write(project_id, es_buffer)
+        target_es.bulk_write(project_id, es_buffer, "matches_hash")
         es_buffer = []
     # 7. Merge new evidence
     # Not very efficient, should do batch queries and partial fetches + update
@@ -171,7 +171,7 @@ def apply_reassembly_to_es(
             update_buffer.append(stmt)
     if len(update_buffer) > 0:
         print(f"\tIndexing ... {len(update_buffer)}")
-        target_es.bulk_write(project_id, update_buffer)
+        target_es.bulk_write(project_id, update_buffer, "matches_hash")
 
     return statement_ids
 

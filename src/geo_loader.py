@@ -40,7 +40,7 @@ es = Elastic(ES_url)
 
 es_documents = format_document(all_countries_df, relevant_cols)
 
-es.bulk_write("geo", es_documents)
+es.bulk_write("geo", es_documents, "geo_id")
 
 all_countries_df = None
 

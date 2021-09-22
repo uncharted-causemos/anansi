@@ -12,23 +12,16 @@ es_bulk_config = {
     "timeout": "60s"
 }
 
-def _format_for_es(index, data):
+def _format_for_es(index, data, key):
     if not isinstance(data, list):
         data = [data]
 
     for datum in data:
-        if index == 'geo':
-            yield {
-                "_source": datum,
-                "_index": index,
-                "_id": datum["geo_id"]
-            }
-        else:
-            yield {
-                "_source": datum,
-                "_index": index,
-                "_id": datum["id"]
-            }
+        yield {
+            "_source": datum,
+            "_index": index,
+            "_id": datum[key]
+        }
 
 # Simple Elastic wrapper, mostly for indexing and useful for looking up geo and cdr documents
 class Elastic:
@@ -63,11 +56,11 @@ class Elastic:
         result = self.client.search(index=index, body=body, **kwargs)
         return self.parse_result(result)
 
-    def bulk_write(self, index, data):
+    def bulk_write(self, index, data, key = "id"):
         """
         Bulk write to ES
         """
-        ok, response = bulk(self.client, _format_for_es(index, data), **es_bulk_config)
+        ok, response = bulk(self.client, _format_for_es(index, data, key), **es_bulk_config)
 
         if not ok:
             body = response[0]["index"]
