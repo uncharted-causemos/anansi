@@ -29,7 +29,7 @@ def influence_transform(statement, es):
 
     return {
         "id": statement["id"],
-        "matches_hash": statement["matches_hash"],
+        "matches_hash": str(statement["matches_hash"]),
         "belief": statement["belief"],
         "evidence": evidence,
         "modified_at": round(time.time() * 1000),
