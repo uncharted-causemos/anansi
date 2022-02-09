@@ -17,9 +17,14 @@ def read_environment_variables() -> Tuple[str, str, str, str, str, str, str]:
 
     # Resources like geolocation and corpus, generally speaking source/target will be the same
     SOURCE_ES = os.environ.get("SOURCE_ES")
+    SOURCE_USERNAME = os.environ.get("SOURCE_USERNAME")
+    SOURCE_PASSWORD = os.environ.get("SOURCE_PASSWORD")
+
 
     # Where to index documents
     TARGET_ES= os.environ.get("TARGET_ES")
+    TARGET_USERNAME = os.environ.get("TARGET_USERNAME")
+    TARGET_PASSWORD = os.environ.get("TARGET_PASSWORD")
 
     DART_HOST = os.environ.get("DART_HOST")
     DART_USER = os.environ.get("DART_USER")
@@ -30,7 +35,11 @@ def read_environment_variables() -> Tuple[str, str, str, str, str, str, str]:
     return (
         INDRA_HOST,
         SOURCE_ES,
+        SOURCE_USERNAME,
+        SOURCE_PASSWORD,
         TARGET_ES,
+        TARGET_USERNAME,
+        TARGET_PASSWORD
         DART_HOST,
         DART_USER,
         DART_PASS,
@@ -57,8 +66,8 @@ def print_inputs(
 
 
 @task(log_stdout=True)
-def fetch_assembly_request(assembly_request_id, SOURCE_ES) -> Tuple[str, list]:
-    source_es = Elastic(SOURCE_ES)
+def fetch_assembly_request(assembly_request_id, SOURCE_ES, SOURCE_USERNAME, SOURCE_PASSWORD) -> Tuple[str, list]:
+    source_es = Elastic(SOURCE_ES, http_auth=(SOURCE_USERNAME, SOURCE_PASSWORD), verify_certs=False)
     # 1. Fetch assembly-request from source-es by id
     print("Fetching assembly-request")
     assembly_request = source_es.term_query("assembly-request", "id", assembly_request_id)
@@ -117,10 +126,14 @@ def apply_reassembly_to_es(
     response,
     project_id,
     SOURCE_ES,
-    TARGET_ES
+    SOURCE_USERNAME,
+    SOURCE_PASSWORD,
+    TARGET_ES,
+    TARGET_USERNAME,
+    TARGET_PASSWORD
 ):
-    source_es = Elastic(SOURCE_ES)
-    target_es = Elastic(TARGET_ES)
+    source_es = Elastic(SOURCE_ES, http_auth=(SOURCE_USERNAME, SOURCE_PASSWORD), verify_certs=False)
+    target_es = Elastic(TARGET_ES, http_auth=(TARGET_USERNAME, TARGET_USERNAME), verify_certs=False)
     # 5. Parse INDRA response
     new_stmts = response["new_stmts"]
     new_evidence = response["new_evidence"]
@@ -176,8 +189,8 @@ def apply_reassembly_to_es(
     return statement_ids
 
 @task(log_stdout=True)
-def update_curations(host, SOURCE_ES, project_id, statement_ids):
-    source_es = Elastic(SOURCE_ES)
+def update_curations(host, SOURCE_ES, SOURCE_USERNAME, SOURCE_PASSWORD, project_id, statement_ids):
+    source_es = Elastic(SOURCE_ES, http_auth=(SOURCE_USERNAME, SOURCE_PASSWORD), verify_certs=False)
     # need to get kb_id from the project index
     project = source_es.term_query("project", "id", project_id)
     kb_id = project["kb_id"]
@@ -201,7 +214,11 @@ with Flow("incremental assembly", run_config=LocalRun(labels=["non-dask"])) as f
     (
         INDRA_HOST,
         SOURCE_ES,
+        SOURCE_USERNAME,
+        SOURCE_PASSWORD,
         TARGET_ES,
+        TARGET_USERNAME,
+        TARGET_PASSWORD,
         DART_HOST,
         DART_USER,
         DART_PASS,
@@ -214,7 +231,7 @@ with Flow("incremental assembly", run_config=LocalRun(labels=["non-dask"])) as f
         ASSEMBLY_REQUEST_ID
     )
 
-    (project_id, records) = fetch_assembly_request(ASSEMBLY_REQUEST_ID, SOURCE_ES)
+    (project_id, records) = fetch_assembly_request(ASSEMBLY_REQUEST_ID, SOURCE_ES, SOURCE_USERNAME, SOURCE_PASSWORD)
     process_cdrs_completed = process_cdrs(
         ASSEMBLY_REQUEST_ID,
         records,
@@ -229,10 +246,14 @@ with Flow("incremental assembly", run_config=LocalRun(labels=["non-dask"])) as f
         response,
         project_id,
         SOURCE_ES,
+        SOURCE_USERNAME,
+        SOURCE_PASSWORD
         TARGET_ES,
+        TARGET_USERNAME,
+        TARGET_PASSWORD,
         upstream_tasks=[process_cdrs_completed]
     )
-    update_curations(CURATION_HOST, SOURCE_ES, project_id, statement_ids)
+    update_curations(CURATION_HOST, SOURCE_ES, SOURCE_USERNAME, SOURCE_PASSWORD, project_id, statement_ids)
     mark_completed(project_id)
 
 # ===========================================================
