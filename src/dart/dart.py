@@ -24,6 +24,7 @@ def document_transform(doc):
         "file_name": doc.get("source_uri", ""),
         "file_type": doc.get("content_type", "") ,
         "doc_title": extracted_metadata.get("Title", ""),
+        "genre": extracted_metadata.get("StatedGenre", "unspecified"),
         "author": extracted_metadata.get("Author", ""),
         "publisher_name": extracted_metadata.get("Publisher", ""),
         "publication_date": publication_date,
