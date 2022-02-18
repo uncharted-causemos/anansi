@@ -52,10 +52,10 @@ if SOURCE_USERNAME == None or SOURCE_PASSWORD == None:
 else:
     source_es = Elastic(SOURCE_ES, http_auth=(SOURCE_USERNAME, SOURCE_PASSWORD), verify_certs=False)
 
-if SOURCE_USERNAME == None or SOURCE_PASSWORD == None:
+if TARGET_USERNAME == None or TARGET_PASSWORD == None:
     target_es = Elastic(TARGET_ES)
 else:
-    target_es = Elastic(TARGET_ES, http_auth=(SOURCE_USERNAME, SOURCE_PASSWORD), verify_certs=False, timeout=300)
+    target_es = Elastic(TARGET_ES, http_auth=(TARGET_USERNAME, TARGET_PASSWORD), verify_certs=False, timeout=300)
 
 
 def JSONL_ETL_wrapper(filename, transform_fn, index_name, key = "id"):
