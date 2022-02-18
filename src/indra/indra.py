@@ -14,6 +14,7 @@ def metadata_transfrom(metadata, uuid, ontology_url):
         "corpus_id": corpus_id,
         "name": corpus_id,
         "id":   uuid,
+        "tenant_id": metadata.get("tenant", None),
         "created_at": epoch_millis()
     }
 
