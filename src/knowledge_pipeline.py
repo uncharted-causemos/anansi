@@ -44,8 +44,19 @@ ONTOLOGY_URL = "https://raw.githubusercontent.com/WorldModelers/Ontologies/maste
 indra_dataset_id = "indra-" + str(uuid.uuid4());
 
 # Vars
-source_es = Elastic(SOURCE_ES, http_auth=(SOURCE_USERNAME, SOURCE_PASSWORD), verify_certs=False)
-target_es = Elastic(TARGET_ES, http_auth=(SOURCE_USERNAME, SOURCE_PASSWORD), verify_certs=False, timeout=300)
+source_es = None
+target_es = None
+
+if SOURCE_USERNAME == None or SOURCE_PASSWORD == None:
+    source_es = Elastic([SOURCE_ES])
+else:
+    source_es = Elastic([SOURCE_ES], http_auth=(SOURCE_USERNAME, SOURCE_PASSWORD), verify_certs=False)
+
+if SOURCE_USERNAME == None or SOURCE_PASSWORD == None:
+    target_es = Elastic([TARGET_ES])
+else:
+    target_es = Elastic([TARGET_ES], http_auth=(SOURCE_USERNAME, SOURCE_PASSWORD), verify_certs=False, timeout=300)
+
 
 def JSONL_ETL_wrapper(filename, transform_fn, index_name, key = "id"):
     counter = 0
