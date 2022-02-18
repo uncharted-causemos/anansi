@@ -27,8 +27,12 @@ INDRA_HOST = "http://wm.indra.bio/"
 
 # SOURCE_ES_HOST = "http://10.64.18.99"
 SOURCE_ES = os.environ.get("SOURCE_ES")
+SOURCE_USERNAME = os.environ.get("SOURCE_USERNAME")
+SOURCE_PASSWORD = os.environ.get("SOURCE_PASSWORD")
 
 TARGET_ES = os.environ.get("TARGET_ES")
+TARGET_USERNAME = os.environ.get("TARGET_USERNAME")
+TARGET_PASSWORD = os.environ.get("TARGET_PASSWORD")
 
 DART_DATA = os.environ.get("DART_DATA")
 INDRA_DATASET = os.environ.get("INDRA_DATASET")
@@ -40,8 +44,8 @@ ONTOLOGY_URL = "https://raw.githubusercontent.com/WorldModelers/Ontologies/maste
 indra_dataset_id = "indra-" + str(uuid.uuid4());
 
 # Vars
-source_es = Elastic(SOURCE_ES)
-target_es = Elastic(TARGET_ES, timeout=300)
+source_es = Elastic(SOURCE_ES, http_auth=(SOURCE_USERNAME, SOURCE_PASSWORD), verify_certs=False)
+target_es = Elastic(TARGET_ES, http_auth=(SOURCE_USERNAME, SOURCE_PASSWORD), verify_certs=False, timeout=300)
 
 def JSONL_ETL_wrapper(filename, transform_fn, index_name, key = "id"):
     counter = 0
@@ -113,7 +117,7 @@ target_es.set_readonly(indra_dataset_id, True)
 # 4. Create knowledge base entry
 logger.info("Creating knowledge base entry")
 metadata = json_file_content(INDRA_METADATA);
-kb_doc = metadata_transfrom(metadata, indra_dataset_id, ONTOLOGY_URL)
+kb_doc = metadata_transfrom(metadata, indra_dataset_id, "")
 target_es.bulk_write("knowledge-base", [kb_doc])
 
 logger.info("All done!!!")

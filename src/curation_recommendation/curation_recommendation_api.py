@@ -10,8 +10,7 @@ class CurationRecommendationAPI:
 
     def delta_ingest(self, kb_id, statement_ids, project_id):
         r = requests.post(self._host + "/recommendation/delta-ingest/" + kb_id, json={
-            "es_host": ":".join(self._es_url.split(':')[:-1]),
-            "es_port": self._es_url.split(":")[-1],
+            "es_url": self._es_url,
             "statement_ids": statement_ids,
             "project_id": project_id
         }, timeout=1200)

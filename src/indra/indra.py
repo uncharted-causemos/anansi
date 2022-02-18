@@ -8,10 +8,16 @@ def metadata_transfrom(metadata, uuid, ontology_url):
     Transforms INDRA metadata into a Causemos Knowledgebase entry record
     """
     corpus_id = metadata["corpus_id"]
+
+    tenant_id = "none"
+    if "tenant_id" in metadata:
+        tenant_id = metadata["tenant_id"]
+
     return {
         "corpus_parameter": metadata,
         "ontology": ontology_url,
         "corpus_id": corpus_id,
+        "tenant_id": tenant_id,
         "name": corpus_id,
         "id":   uuid,
         "tenant_id": metadata.get("tenant", None),
