@@ -11,7 +11,7 @@ from utils import epoch_millis
 
 
 @task(log_stdout=True)
-def read_environment_variables() -> Tuple[str, str, str, str, str, str, str]:
+def read_environment_variables() -> Tuple[str, str, str, str, str, str, str, str, str, str, str]:
     # Environment
     INDRA_HOST = os.environ.get("INDRA_HOST")  # "http://wm.indra.bio/"
 
@@ -39,7 +39,7 @@ def read_environment_variables() -> Tuple[str, str, str, str, str, str, str]:
         SOURCE_PASSWORD,
         TARGET_ES,
         TARGET_USERNAME,
-        TARGET_PASSWORD
+        TARGET_PASSWORD,
         DART_HOST,
         DART_USER,
         DART_PASS,
@@ -247,7 +247,7 @@ with Flow("incremental assembly", run_config=LocalRun(labels=["non-dask"])) as f
         project_id,
         SOURCE_ES,
         SOURCE_USERNAME,
-        SOURCE_PASSWORD
+        SOURCE_PASSWORD,
         TARGET_ES,
         TARGET_USERNAME,
         TARGET_PASSWORD,
