@@ -79,9 +79,9 @@ def fetch_assembly_request(assembly_request_id, SOURCE_ES, SOURCE_USERNAME, SOUR
 
 
 @task(log_stdout=True)
-def process_cdrs(ASSEMBLY_REQUEST_ID, records, DART_HOST, DART_USER, DART_PASS, TARGET_ES):
+def process_cdrs(ASSEMBLY_REQUEST_ID, records, DART_HOST, DART_USER, DART_PASS, TARGET_ES, TARGET_USERNAME, TARGET_PASSWORD):
 
-    target_es = Elastic(TARGET_ES)
+    target_es = Elastic(TARGET_ES, http_auth=(TARGET_USERNAME, TARGET_PASSWORD))
     # 3. Process CDR
     doc_ids = []
     for record in records:
@@ -132,8 +132,8 @@ def apply_reassembly_to_es(
     TARGET_USERNAME,
     TARGET_PASSWORD
 ):
-    source_es = Elastic(SOURCE_ES, http_auth=(SOURCE_USERNAME, SOURCE_PASSWORD), verify_certs=False)
-    target_es = Elastic(TARGET_ES, http_auth=(TARGET_USERNAME, TARGET_USERNAME), verify_certs=False)
+    source_es = Elastic(SOURCE_ES, http_auth=(SOURCE_USERNAME, SOURCE_PASSWORD))
+    target_es = Elastic(TARGET_ES, http_auth=(TARGET_USERNAME, TARGET_USERNAME))
     # 5. Parse INDRA response
     new_stmts = response["new_stmts"]
     new_evidence = response["new_evidence"]
@@ -190,6 +190,10 @@ def apply_reassembly_to_es(
 
 @task(log_stdout=True)
 def update_curations(host, SOURCE_ES, SOURCE_USERNAME, SOURCE_PASSWORD, project_id, statement_ids):
+    if len(statement_ids) == 0:
+        print(f"No statements detected, skip curation delta ingestion")
+        return
+
     source_es = Elastic(SOURCE_ES, http_auth=(SOURCE_USERNAME, SOURCE_PASSWORD), verify_certs=False)
     # need to get kb_id from the project index
     project = source_es.term_query("project", "id", project_id)
@@ -238,7 +242,9 @@ with Flow("incremental assembly", run_config=LocalRun(labels=["non-dask"])) as f
         DART_HOST,
         DART_USER,
         DART_PASS,
-        TARGET_ES
+        TARGET_ES,
+        TARGET_USERNAME,
+        TARGET_PASSWORD
     )
 
     response = request_reassembly(project_id, records, INDRA_HOST)

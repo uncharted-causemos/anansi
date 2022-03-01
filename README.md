@@ -42,7 +42,11 @@ python scripts/download_indra_s3.py
 
 ```
 SOURCE_ES="<ES_URL>" \
+SOURCE_USERNAME="<username>" \
+SOURCE_PASSWORD="<password"> \
 TARGET_ES="<ES_URL>" \
+TARGET_USERNAME="<username>" \
+TARGET_PASSWORD="<password"> \
 DART_DATA="<PATH_TO_dart_cdr.json>" \
 INDRA_DATASET="<PATH_TO_INDRA_DIRECTORY>" \
 python src/knowledge_pipeline.py
@@ -85,7 +89,7 @@ PREFECT__ENGINE__EXECUTOR__DEFAULT_CLASS="prefect.executors.LocalExecutor" PYTHO
 conda activate prefect-seq
 
 # 3. Register flow
-python incremental_assembly.py
+python incremental_pipeline.py
 ```
 
 #### To create the agent in the first place:
