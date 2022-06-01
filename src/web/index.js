@@ -20,7 +20,7 @@ app.get('/', (req, res) => {
 
 app.post('/kb', asyncHandler(async (req, res) => {
   runningKB = false;
-  exec('cd ../ && INDRA_DATASET=aaa python knowledge_pipeline.py', (err, stdout, stderr) => {
+  exec('cd ../ && INDRA_DATASET=aaa python3 knowledge_pipeline.py', (err, stdout, stderr) => {
     console.log(err);
     console.log(stdout);
     console.log(stderr);
@@ -34,7 +34,7 @@ app.post('/byod', asyncHandler(async (req, res) => {
   const id = payload.id;
   runningBYOD = true;
   console.log(payload, id);
-  exec(`cd ../ && ASSEMBLY_REQUEST_ID=${id} python incremental_pipeline_web.py`, (err, stdout, stderr) => {
+  exec(`cd ../ && ASSEMBLY_REQUEST_ID=${id} python3 incremental_pipeline_web.py`, (err, stdout, stderr) => {
     console.log(err);
     console.log(stdout);
     console.log(stderr);
