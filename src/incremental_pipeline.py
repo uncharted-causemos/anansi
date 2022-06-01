@@ -17,14 +17,14 @@ def read_environment_variables() -> Tuple[str, str, str, str, str, str, str, str
 
     # Resources like geolocation and corpus, generally speaking source/target will be the same
     SOURCE_ES = os.environ.get("SOURCE_ES")
-    SOURCE_USERNAME = os.environ.get("SOURCE_USERNAME")
-    SOURCE_PASSWORD = os.environ.get("SOURCE_PASSWORD")
+    SOURCE_USERNAME = os.environ.get("SOURCE_USERNAME", "")
+    SOURCE_PASSWORD = os.environ.get("SOURCE_PASSWORD", "")
 
 
     # Where to index documents
     TARGET_ES= os.environ.get("TARGET_ES")
-    TARGET_USERNAME = os.environ.get("TARGET_USERNAME")
-    TARGET_PASSWORD = os.environ.get("TARGET_PASSWORD")
+    TARGET_USERNAME = os.environ.get("TARGET_USERNAME", "")
+    TARGET_PASSWORD = os.environ.get("TARGET_PASSWORD", "")
 
     DART_HOST = os.environ.get("DART_HOST")
     DART_USER = os.environ.get("DART_USER")
