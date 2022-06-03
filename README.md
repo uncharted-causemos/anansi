@@ -95,3 +95,45 @@ python incremental_pipeline.py
 #### To create the agent in the first place:
 
 `conda create -n prefect-seq -c conda-forge "python>=3.8.0" prefect "elasticsearch==7.11.0" "boto3==1.17.18" "smart_open==5.0.0" python-dateutil requests`
+
+
+### Running as  a web-service mode
+Anansi can be run as a stand-alone, dockerized web-serice. This provides the following end-points
+- /kb, as an analog to knowledge pipeline, this returns a task id
+- /byod, as an analog for incremental assembly, this retrns a task id
+- /status, to check the status of a given task
+
+To create and run the docker image
+
+```
+# Build
+docker build . -t anansi-webservice
+
+# Run
+docker run \
+  -p 6000:6000 \
+  -e SOURCE_ES="<elastic search url>" \
+  -e TARGET_ES="<elastic search url>" \
+  -e INDRA_HOST="<indral url>" \
+  -e INDRA_HOST="<indral url>" \
+  anansi-webservice
+```
+
+Then
+
+```
+# Requesting knowledge ingestion
+curl -XPOST -H "Content-type: application/json" http://localhost:6000/kb -d'
+{
+  "indra": "http://10.64.16.209:4005/pipeline-test/indra",
+  "dart": "http://10.64.16.209:4005/pipeline-test/dart/july-sample.jsonl"
+}
+'
+
+# Requesting incremntal assembly (byod)
+curl -XPOST -H "Content-type: application/json" localhost:6000/byod -d'{"id": "0d1da882-2b73-4f0d-8007-2894a47c1620"}'
+
+
+# Check status
+curl localhost:6000/status/ac6fe39c-50fe-4352-9982-f91696873691
+```
