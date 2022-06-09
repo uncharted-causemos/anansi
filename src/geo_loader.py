@@ -60,4 +60,4 @@ gadm_woredas_df = filter_rows_and_columns(gadm_woredas_df, relevant_cols)
 
 es_documents = format_document(gadm_woredas_df, relevant_cols)
 
-es.bulk_write("geo", es_documents)
+es.bulk_write("geo", es_documents, key="geo_id")
