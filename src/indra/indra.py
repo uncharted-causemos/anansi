@@ -162,7 +162,8 @@ def evidence_transform(ev, es):
             document_context["document_source"] = cdr["collection_type"] # ????
             document_context["publisher_name"] = cdr["publisher_name"]
             document_context["title"] = cdr["doc_title"]
-            document_context["genre"] = cdr["genre"]
+            if "genre" in cdr:
+                document_context["genre"] = cdr["genre"]
             document_context["ner_analytics"] = cdr["ner_analytics"]
             document_context["analysis"] = cdr["analysis"]
             document_context["label"] = cdr["label"]
