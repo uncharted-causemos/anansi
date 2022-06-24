@@ -98,6 +98,9 @@ if (WATCH_FOLDER) {
       if (!fs.lstatSync(`${WATCH_FOLDER}/${file}`).isDirectory()) {
         continue;
       }
+      if (file.startsWith('__PROCESSED__')) {
+        continue;
+      }
 
       if (!indraProcessedMap[file]) {
         newList.push(file);
@@ -121,6 +124,10 @@ if (WATCH_FOLDER) {
           console.log(err);
           console.log(stdout);
           console.log(stderr);
+
+          // Makr dataset as processed
+          exec(`mv ${WATCH_FOLDER}/${indra} ${WATCH_FOLDER}/__PROCESSED__${indra}`);
+
         });
       });
     }
