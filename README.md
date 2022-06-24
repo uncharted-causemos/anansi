@@ -103,6 +103,8 @@ Anansi can be run as a stand-alone, dockerized web-serice. This provides the fol
 - /byod, as an analog for incremental assembly, this retrns a task id
 - /status, to check the status of a given task
 
+If `WATCH_FOLDER` environment variable is defined, anansi will periodically check the linked/mounted folder for new INDRA datasets and start the DART CDR + INDRA ingestion automatically.
+
 To create and run the docker image
 
 ```
@@ -115,14 +117,19 @@ docker run \
   -e SOURCE_ES="<elastic search url>" \
   -e TARGET_ES="<elastic search url>" \
   -e INDRA_HOST="<indral url>" \
-  -e INDRA_HOST="<indral url>" \
+  -e DART_CDF_URL="<dart cdr url>" \
+  -e DART_USERNAME="<dart username>" \
+  -e DART_PASSWORD="<dart userpassword>" \
+  -e WATCH_FOLDER=/indra_data \
+  -e WATCH_INTERVAL=60000 \
+  -v <full path to directory>:/indra_data \
   anansi-webservice
 ```
 
-Then
 
+Then
 ```
-# Requesting knowledge ingestion
+# Manually requesting knowledge ingestion
 curl -XPOST -H "Content-type: application/json" http://localhost:6000/kb -d'
 {
   "indra": "http://10.64.16.209:4005/pipeline-test/indra",
