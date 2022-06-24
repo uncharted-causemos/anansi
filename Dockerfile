@@ -15,7 +15,7 @@ RUN pip install -r requirements.txt
 COPY ./src ./ 
 
 WORKDIR web
-RUN chmod 777 web/dart.sh
+RUN chmod 777 dart.sh
 RUN npm install
 
 CMD ["node", "index.js"]

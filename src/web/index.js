@@ -78,7 +78,7 @@ app.get('/status/:id', asyncHandler(async (req, res) => {
 
 
 const WATCH_FOLDER = process.env.WATCH_FOLDER;
-const WATCH_INTERVAL = 10000;
+const WATCH_INTERVAL = process.env.WATCH_INTERVAL || 30000;
 
 if (WATCH_FOLDER) {
   console.log(`Watching ${WATCH_FOLDER}`);
